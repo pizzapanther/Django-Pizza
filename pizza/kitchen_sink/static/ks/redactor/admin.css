@@ -1,0 +1,19 @@
+.redactor_box {
+  width: 700px;
+  height: 400px;
+}
+
+#redactor_modal_footer input[type="button"] {
+  width: 50px;
+  margin: 0;
+  color: #309BBF;
+}
+
+#redactor_btn_modal_close {
+  padding-top: 6px;
+  display: inline-block;
+}
+
+textarea {
+  height: 250px;
+}

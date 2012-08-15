@@ -1,0 +1,13 @@
+<a href="javascript: void(0)" onclick="close_versions({{ page.id }})">[ Collapse ]</a>
+<table class="versions">
+  {% for v in page.version_iter %}
+  <tr class="grp-row {% cycle 'grp-row-odd' 'grp-row-even' %}">
+    <td>
+      {% if v.publish %}{{ v.publish|date:"M D, Y @ P" }}{% else %}Unpublished{% endif %}
+    </td>
+    <td>
+      <a href="{{ page.url }}?version={{ v.id }}" target="_blank">View</a>&nbsp; &sdot;&nbsp; <a href="./{{ page.id }}/?version={{ v.id }}">Edit From</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
