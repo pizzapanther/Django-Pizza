@@ -1,3 +1,4 @@
+import datetime
 import cPickle as pickle
 
 from django import forms
@@ -8,12 +9,24 @@ from django.template.defaultfilters import date
 from django.contrib.admin.widgets import AdminSplitDateTime, ForeignKeyRawIdWidget
 from django.contrib import admin
 from django.db.models.fields.related import ManyToOneRel
+from django.utils.timezone import utc
+from django.db.models.signals import post_save
+from django.core.cache import cache
+from django.dispatch import receiver
 
 from .widgets import RichText
+from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
+
+from sorl.thumbnail import get_thumbnail
 
 PIZZA_FILE_DIR = getattr(settings, 'PIZZA_FILE_DIR', 'pizza/files/%Y-%m')
 PIZZA_IMAGE_DIR = getattr(settings, 'PIZZA_IMAGE_DIR', 'pizza/images/%Y-%m')
 
+@receiver(post_save, sender=Site)
+def site_cache (sender, **kwargs):
+  cache.delete(PIZZA_SITES_KEY)
+  cache.delete(PIZZA_DEFAULT_SITE_KEY)
+  
 class SitesMixin (object):
   def _sites (self):
     ret = ''
@@ -39,6 +52,7 @@ class File (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
   file = models.FileField(upload_to=PIZZA_FILE_DIR)
   added_by = models.ForeignKey('auth.User')
+  modified = models.DateTimeField(auto_now=True, auto_now_add=True)
   
   def __unicode__ (self):
     return self.title
@@ -50,6 +64,7 @@ class Image (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
   file = models.ImageField(upload_to=PIZZA_IMAGE_DIR)
   added_by = models.ForeignKey('auth.User')
+  modified = models.DateTimeField(auto_now=True, auto_now_add=True)
   
   def __unicode__ (self):
     return self.title
@@ -57,6 +72,12 @@ class Image (ViewFileMixin, models.Model):
   class Meta:
     ordering = ("title",)
     
+  def Thumbnail (self):
+    im = get_thumbnail(self.file, '64x64')
+    return '<img src="%s" alt="">' % im.url
+    
+  Thumbnail.allow_tags = True
+  
 class Template (models.Model):
   name = models.CharField(max_length=255)
   template = models.CharField(max_length=255, choices=settings.PIZZA_TEMPLATES)
@@ -135,6 +156,19 @@ class Page (SitesMixin, models.Model):
     
   Settings.allow_tags = True
   
+  def published_version (self, version=None):
+    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+    if version:
+      qs = self.version_set.filter(id=version)
+      
+    else:
+      qs = self.version_set.filter(publish__lte=now)
+      
+    if qs.count() > 0:
+      return qs[0]
+      
+    return None
+    
   def version_iter (self):
     ret = []
     for v in self.unpublished_versions():
@@ -180,6 +214,11 @@ class Page (SitesMixin, models.Model):
     
   Versions.allow_tags = True
   
+  def View_Published (self):
+    return '<a href="%s" target="_blank">View</a>' % self.url
+    
+  View_Published.allow_tags = True
+    
 class Redirect (SitesMixin, models.Model):
   url = models.CharField('URL', max_length=255, help_text='Examples: /, /some_page, /some_page/sub_page')
   goto = models.CharField('Redirect To', max_length=255, help_text='Relative urls should begin with a slash (/), absolute urls should begin with "http://"')
@@ -207,6 +246,18 @@ class Version (models.Model):
   
   content = models.TextField()
   
+  def get_context (self):
+    c = self.get_content()
+    for tr in self.page.template.templateregion_set.all():
+      if tr.etype == 'image' and c.has_key(tr.cvar) and c[tr.cvar]:
+        try:
+          c[tr.cvar] = Image.objects.get(id=c[tr.cvar])
+          
+        except models.ObjectDoesNotExist:
+          pass
+        
+    return c
+    
   def get_content (self):
     if self.content:
       return pickle.loads(str(self.content))

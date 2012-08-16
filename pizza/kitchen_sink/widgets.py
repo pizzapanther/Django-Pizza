@@ -1,6 +1,7 @@
 from django import forms
 from django.conf import settings
 from django.utils.safestring import mark_safe
+from django.core.urlresolvers import reverse
 
 class RichText (forms.Textarea):
   def render (self, name, value, attrs=None):
@@ -8,10 +9,17 @@ class RichText (forms.Textarea):
     ret += """
     <script type="text/javascript">
         $(document).ready(function() {
-          $('#id_%s').redactor();
+          $('#id_%s').redactor({
+            imageGetJson: '%s',
+            imageUpload: '%s'
+          });
         });
     </script>
-    """ % name
+    """ % (
+      name,
+      reverse('kitchen_sink:admin_image_list'),
+      reverse('kitchen_sink:admin_image_upload')
+    )
     
     return mark_safe(ret)
     

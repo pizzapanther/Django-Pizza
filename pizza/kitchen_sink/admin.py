@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.template.response import TemplateResponse
+from django.contrib.sites.models import Site
 
 from .models import Page, Version, Redirect, Template, TemplateRegion, Image, File
 
@@ -9,7 +10,7 @@ class ReAdmin (admin.ModelAdmin):
   search_fields = ('url', 'goto')
   
 class PageAdmin (admin.ModelAdmin):
-  list_display = ('url', 'template', '_sites', 'Settings', 'Versions')
+  list_display = ('url', 'template', '_sites', 'Settings', 'View_Published', 'Versions')
   list_filter = ('sites', 'template')
   search_fields = ('url',)
   
@@ -46,7 +47,8 @@ class PageAdmin (admin.ModelAdmin):
             page=qs[0].page,
             title=qs[0].title,
             keywords=qs[0].keywords,
-            desc=qs[0].desc
+            desc=qs[0].desc,
+            content=qs[0].content
           )
           return obj
           
@@ -99,7 +101,7 @@ class TemplateAdmin (admin.ModelAdmin):
   inlines = (RegionInline,)
   
 class ImageAdmin (admin.ModelAdmin):
-  list_display = ('title', 'file', 'added_by', 'view')
+  list_display = ('title', 'file', 'Thumbnail', 'added_by', 'view')
   list_filter = ('added_by',)
   search_fields = ('title', 'file')
   exclude = ('added_by',)
