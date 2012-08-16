@@ -1,0 +1,6 @@
+include README.md
+include LICENSE
+include requirements.txt
+recursive-include pizza/kitchen_sink/static *
+recursive-include pizza/kitchen_sink/templates *
+prune build/*
