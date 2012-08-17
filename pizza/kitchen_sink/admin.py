@@ -4,11 +4,19 @@ from django.contrib.sites.models import Site
 
 from .models import Page, Version, Redirect, Template, TemplateRegion, Image, File
 
+ADMIN_QUERY_JS = (
+  'ks/js/jquery-1.8.0.min.js',
+  'ks/js/clear_filters.js',
+)
+
 class ReAdmin (admin.ModelAdmin):
   list_display = ('url', 'goto', '_sites')
   list_filter = ('sites',)
   search_fields = ('url', 'goto')
   
+  class Media:
+    js = ADMIN_QUERY_JS
+    
 class PageAdmin (admin.ModelAdmin):
   list_display = ('url', 'template', '_sites', 'Settings', 'View_Published', 'Versions')
   list_filter = ('sites', 'template')
@@ -19,6 +27,7 @@ class PageAdmin (admin.ModelAdmin):
     js = (
       'ks/js/jquery-1.8.0.min.js',
       'ks/js/ks.js',
+      'ks/js/clear_filters.js',
     )
     
   def get_form (self, request, obj=None, **kwargs):
@@ -100,12 +109,18 @@ class TemplateAdmin (admin.ModelAdmin):
   list_display = ('name', 'template')
   inlines = (RegionInline,)
   
+  class Media:
+    js = ADMIN_QUERY_JS
+    
 class ImageAdmin (admin.ModelAdmin):
   list_display = ('title', 'file', 'Thumbnail', 'added_by', 'view')
   list_filter = ('added_by',)
   search_fields = ('title', 'file')
   exclude = ('added_by',)
   
+  class Media:
+    js = ADMIN_QUERY_JS
+    
   def save_model (self, request, obj, form, change):
     obj.added_by = request.user
     return super(ImageAdmin, self).save_model(request, obj, form, change)
@@ -116,6 +131,9 @@ class FileAdmin (admin.ModelAdmin):
   search_fields = ('title', 'file')
   exclude = ('added_by',)
   
+  class Media:
+    js = ADMIN_QUERY_JS
+    
   def save_model (self, request, obj, form, change):
     obj.added_by = request.user
     return super(FileAdmin, self).save_model(request, obj, form, change)

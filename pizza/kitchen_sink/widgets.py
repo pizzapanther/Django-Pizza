@@ -11,7 +11,8 @@ class RichText (forms.Textarea):
         $(document).ready(function() {
           $('#id_%s').redactor({
             imageGetJson: '%s',
-            imageUpload: '%s'
+            imageUpload: '%s',
+            autoresize: true
           });
         });
     </script>
