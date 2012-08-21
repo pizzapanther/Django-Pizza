@@ -1,0 +1,18 @@
+#edit_tb {
+  position: absolute;
+  background-color: #000;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  color: #fff;
+  
+  padding: 10px 10px 10px 40px;
+  top: 0;
+  left: 0;
+  cursor: move;
+}
+
+#edit_tb button {
+  
+}
+

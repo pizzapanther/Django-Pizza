@@ -1,5 +1,6 @@
 import datetime
 import cPickle as pickle
+import urllib
 
 from django import forms
 from django.db import models
@@ -13,6 +14,7 @@ from django.utils.timezone import utc
 from django.db.models.signals import post_save
 from django.core.cache import cache
 from django.dispatch import receiver
+from django.core.urlresolvers import reverse
 
 from .widgets import RichText
 from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
@@ -102,7 +104,7 @@ EDITORTYPES = (
 
 class TemplateRegion (models.Model):
   template = models.ForeignKey(Template)
-  name = models.CharField('Name', max_length=255)
+  name = models.CharField('Display Name', max_length=255)
   cvar = models.SlugField('Variable Name', max_length=255)
   etype = models.CharField("Editor Type", choices=EDITORTYPES, max_length=25)
   
@@ -215,7 +217,9 @@ class Page (SitesMixin, models.Model):
   Versions.allow_tags = True
   
   def View_Published (self):
-    return '<a href="%s" target="_blank">View</a>' % self.url
+    edit_url = reverse('kitchen_sink:admin_editon')
+    goto = urllib.quote('http://' + self.sites.all()[0].domain + self.url + '?preview=1')
+    return '<a href="%s" target="_blank">View</a>&nbsp; -&nbsp;<a href="%s?goto=%s" target="_blank">Edit on Site</a>' % (self.url, edit_url, goto)
     
   View_Published.allow_tags = True
     

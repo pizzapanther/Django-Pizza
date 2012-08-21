@@ -1,0 +1,19 @@
+{% load static %}
+<link rel="stylesheet" href="{% static "ks/redactor/redactor.css" %}">
+<link rel="stylesheet" href="{% static "ks/css/edit_tools.css" %}">
+<script src="{% static "ks/js/jquery-1.8.0.min.js" %}" type="text/javascript"></script>
+<script src="{% static "ks/js/jquery.cookie.js" %}" type="text/javascript"></script>
+<script src="{% static "ks/redactor/redactor.min.js" %}" type="text/javascript"></script>
+<script src="{% static "ks/js/t.min.js" %}" type="text/javascript"></script>
+<script src="{% static "ks/js/page_tools.js" %}" type="text/javascript"></script>
+<script type="text/javascript">
+  {% if page.template %}
+  var pizzaContext = {{% for tr in page.template.templateregion_set.all %}
+    {{ tr.cvar }}: {etype: '{{ tr.etype }}', dname: '{{ tr.name|escapejs }}'}{% if not forloop.last %}, {% endif %}{% endfor %}
+  };
+  
+  jQuery(document).ready(function () {
+    load_edit_tools();
+  });
+  {% endif %}
+</script>

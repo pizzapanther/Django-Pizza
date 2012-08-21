@@ -2,7 +2,7 @@ import json
 
 from django import http
 from django.template.response import TemplateResponse
-from django.contrib.auth.decorators import login_required
+from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -28,19 +28,21 @@ def page (request):
       pubver = qs[0].published_version()
       
     if pubver:
+      context = pubver.get_context()
+      
       c = {
         'page': qs[0],
         'title': pubver.title,
         'keywords': pubver.keywords,
-        'description': pubver.desc,
+        'description': pubver.desc
       }
       
-      c.update(pubver.get_context())
+      c.update(context)
       return TemplateResponse(request, qs[0].template.template, c)
       
   raise http.Http404
   
-@login_required
+@staff_member_required
 def admin_image_list (request):
   images = []
   
@@ -52,7 +54,7 @@ def admin_image_list (request):
   
 @csrf_exempt
 @require_POST
-@login_required
+@staff_member_required
 def admin_image_upload (request):
   images = []
   for f in request.FILES.getlist("file"):
@@ -60,4 +62,12 @@ def admin_image_upload (request):
     images.append({"filelink": obj.file.url})
     
   return http.HttpResponse(json.dumps(images), mimetype="application/json")
+  
+@staff_member_required
+def admin_editon (request):
+  goto = request.GET.get('goto', '')
+  response = http.HttpResponseRedirect(goto)
+  
+  response.set_cookie('PIZZA_EDIT', value='ON', max_age=60 * 60 * 24, httponly=False)
+  return response
   
