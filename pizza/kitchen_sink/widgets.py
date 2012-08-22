@@ -8,26 +8,18 @@ class RichText (forms.Textarea):
     ret = super(RichText, self).render(name, value, attrs=attrs)
     ret += """
     <script type="text/javascript">
-        $(document).ready(function() {
-          $('#id_%s').redactor({
-            imageGetJson: '%s',
-            imageUpload: '%s',
-            autoresize: true
-          });
-        });
+      CKEDITOR.replace( \'id_%s\', {customConfig : \'%sks/js/ckconfig.js\'});
     </script>
     """ % (
       name,
-      reverse('kitchen_sink:admin_image_list'),
-      reverse('kitchen_sink:admin_image_upload')
+      settings.STATIC_URL
     )
     
     return mark_safe(ret)
     
   class Media:
-    css = {'all': ('ks/redactor/redactor.css', 'ks/redactor/admin.css')}
+    #css = {'all': ('ks/redactor/redactor.css', 'ks/redactor/admin.css')}
     js = (
-      'ks/js/jquery-1.8.0.min.js',
-      'ks/redactor/redactor.min.js',
+      'ks/ckeditor/ckeditor.js',
     )
     

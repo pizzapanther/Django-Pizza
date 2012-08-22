@@ -23,7 +23,7 @@ class PageAdmin (admin.ModelAdmin):
   search_fields = ('url',)
   
   class Media:
-    css = {'all': ('ks/redactor/admin.css', )}
+    css = {'all': ('ks/css/admin.css', )}
     js = (
       'ks/js/jquery-1.8.0.min.js',
       'ks/js/ks.js',
