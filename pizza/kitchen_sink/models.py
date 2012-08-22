@@ -130,7 +130,7 @@ class TemplateRegion (models.Model):
       )
       
     elif self.etype == 'rich':
-      return forms.CharField(max_length=255, required=False, label=self.name, widget=RichText, initial=initial)
+      return forms.CharField(required=False, label=self.name, widget=RichText, initial=initial)
       
     elif self.etype == 'plain':
       return forms.CharField(required=False, label=self.name, widget=forms.Textarea, initial=initial)
