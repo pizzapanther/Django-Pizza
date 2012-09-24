@@ -23,6 +23,7 @@ from sorl.thumbnail import get_thumbnail
 
 PIZZA_FILE_DIR = getattr(settings, 'PIZZA_FILE_DIR', 'pizza/files/%Y-%m')
 PIZZA_IMAGE_DIR = getattr(settings, 'PIZZA_IMAGE_DIR', 'pizza/images/%Y-%m')
+PIZZA_TEMPLATES = getattr(settings, 'PIZZA_TEMPLATES', ())
 
 @receiver(post_save, sender=Site)
 def site_cache (sender, **kwargs):
@@ -49,6 +50,21 @@ class ViewFileMixin (object):
   @staticmethod
   def autocomplete_search_fields():
     return ("id__iexact", "title__icontains")
+    
+class Blurb (models.Model):
+  title = models.CharField(max_length=255)
+  slug = models.SlugField('Key', unique=True)
+  content = models.TextField()
+  
+  def __unicode__ (self):
+    return self.title
+    
+  class Meta:
+    ordering = ('title',)
+    
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "title__icontains", "slug__icontains")
     
 class File (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
@@ -82,7 +98,7 @@ class Image (ViewFileMixin, models.Model):
   
 class Template (models.Model):
   name = models.CharField(max_length=255)
-  template = models.CharField(max_length=255, choices=settings.PIZZA_TEMPLATES)
+  template = models.CharField(max_length=255, choices=PIZZA_TEMPLATES)
   
   def __unicode__ (self):
     return self.name

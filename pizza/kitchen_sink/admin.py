@@ -1,8 +1,11 @@
 from django.contrib import admin
+from django.db import models
 from django.template.response import TemplateResponse
 from django.contrib.sites.models import Site
 
-from .models import Page, Version, Redirect, Template, TemplateRegion, Image, File
+from .widgets import RichText
+from .models import Page, Version, Redirect, Template, TemplateRegion, Image, \
+                    File, Blurb
 
 ADMIN_QUERY_JS = (
   'ks/js/jquery-1.8.0.min.js',
@@ -138,8 +141,20 @@ class FileAdmin (admin.ModelAdmin):
     obj.added_by = request.user
     return super(FileAdmin, self).save_model(request, obj, form, change)
     
+class BlurbAdmin (admin.ModelAdmin):
+  list_display = ('title', 'slug')
+  search_fields = ('title', 'slug')
+  formfield_overrides = {
+    models.TextField: {'widget': RichText},
+  }
+  
+  class Media:
+    js = ADMIN_QUERY_JS
+    
 admin.site.register(Redirect, ReAdmin)
 admin.site.register(Page, PageAdmin)
 admin.site.register(Template, TemplateAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(File, FileAdmin)
+admin.site.register(Blurb, BlurbAdmin)
+
