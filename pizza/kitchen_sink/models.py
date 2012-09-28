@@ -69,9 +69,11 @@ class Blurb (models.Model):
 class File (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
   file = models.FileField(upload_to=PIZZA_FILE_DIR)
-  added_by = models.ForeignKey('auth.User')
-  modified = models.DateTimeField(auto_now=True, auto_now_add=True)
   
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "title__icontains", "file__icontains")
+    
   def __unicode__ (self):
     return self.title
     
@@ -81,9 +83,17 @@ class File (ViewFileMixin, models.Model):
 class Image (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
   file = models.ImageField(upload_to=PIZZA_IMAGE_DIR)
-  added_by = models.ForeignKey('auth.User')
-  modified = models.DateTimeField(auto_now=True, auto_now_add=True)
   
+  caption = models.CharField(max_length=255, blank=True, null=True)
+  caption_url = models.CharField('Caption URL', max_length=255, blank=True, null=True)
+  
+  credit = models.CharField('Photo Credit', max_length=255, blank=True, null=True)
+  credit_url = models.CharField('Photo Credit URL', max_length=255, blank=True, null=True)
+  
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "title__icontains", "file__icontains")
+    
   def __unicode__ (self):
     return self.title
     
@@ -93,6 +103,82 @@ class Image (ViewFileMixin, models.Model):
   def Thumbnail (self):
     im = get_thumbnail(self.file, '64x64')
     return '<img src="%s" alt="">' % im.url
+    
+  Thumbnail.allow_tags = True
+  
+CAPTYPES = (
+  ('override', 'Use image captions and credits, and override if filled in below.'),
+  ('mine', 'Use captions and credits from below only'),
+)
+
+class ImageSet (models.Model):
+  title = models.CharField(max_length=255)
+  captype = models.CharField('Caption/Credit Override', max_length=10, choices=CAPTYPES, default='override')
+  
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "title__icontains")
+    
+  def __unicode__ (self):
+    return self.title
+    
+  class Meta:
+    ordering = ("title",)
+    verbose_name = 'Image Set'
+    
+  def Thumbnails (self):
+    ret = ''
+    for item in self.imagesetitem_set.all():
+      ret += item.image.Thumbnail().replace('<img ', '<img style="float: left; margin: 0 10px 10px 0;" ')
+      
+    ret += '<div style="clear: both;"></div>'
+    return ret
+    
+  Thumbnails.allow_tags = True
+  
+class ImageSetItem (models.Model):
+  image = models.ForeignKey(Image)
+  imageset = models.ForeignKey(ImageSet)
+  
+  caption = models.CharField(max_length=255, blank=True, null=True)
+  caption_url = models.CharField('Caption URL', max_length=255, blank=True, null=True)
+  
+  credit = models.CharField('Photo Credit', max_length=255, blank=True, null=True)
+  credit_url = models.CharField('Photo Credit URL', max_length=255, blank=True, null=True)
+  
+  sorder = models.IntegerField('Order')
+  
+  def __unicode__ (self):
+    return str(self.sorder)
+    
+  class Meta:
+    ordering = ("sorder",)
+    
+class Author (SitesMixin, models.Model):
+  name = models.CharField(max_length=255)
+  slug = models.SlugField(unique=True, max_length=200)
+  email = models.EmailField(blank=True, null=True)
+  
+  image = models.ForeignKey(Image, blank=True, null=True)
+  description = models.TextField('Description/Bio', blank=True, null=True)
+  
+  sites = models.ManyToManyField(Site, blank=True, null=True)
+  
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "name__icontains")
+    
+  def __unicode__ (self):
+    return self.name
+    
+  class Meta:
+    ordering = ("name",)
+    
+  def Thumbnail (self):
+    if self.image:
+      return self.image.Thumbnail()
+      
+    return ''
     
   Thumbnail.allow_tags = True
   

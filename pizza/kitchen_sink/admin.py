@@ -1,29 +1,46 @@
 from django.contrib import admin
 from django.db import models
+from django import forms
 from django.template.response import TemplateResponse
 from django.contrib.sites.models import Site
 
 from .widgets import RichText
 from .models import Page, Version, Redirect, Template, TemplateRegion, Image, \
-                    File, Blurb
+                    File, Blurb, Author, ImageSet, ImageSetItem
 
 ADMIN_QUERY_JS = (
   'ks/js/jquery-1.8.0.min.js',
   'ks/js/clear_filters.js',
 )
 
-class ReAdmin (admin.ModelAdmin):
-  list_display = ('url', 'goto', '_sites')
-  list_filter = ('sites',)
-  search_fields = ('url', 'goto')
-  
+class AdminMixin (object):
   class Media:
     js = ADMIN_QUERY_JS
     
+class AuthorAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('name', 'slug', 'Thumbnail', '_sites')
+  search_fields = ('name', 'slug', 'description')
+  raw_id_fields = ('image',)
+  filter_horizontal = ('sites',)
+  autocomplete_lookup_fields = {
+    'fk': ['image'],
+  }
+  
+  formfield_overrides = {
+    models.TextField: {'widget': RichText},
+  }
+  
+class ReAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('url', 'goto', '_sites')
+  list_filter = ('sites',)
+  search_fields = ('url', 'goto')
+  filter_horizontal = ('sites',)
+  
 class PageAdmin (admin.ModelAdmin):
   list_display = ('url', 'template', '_sites', 'Settings', 'View_Published', 'Versions')
   list_filter = ('sites', 'template')
   search_fields = ('url',)
+  filter_horizontal = ('sites',)
   
   class Media:
     css = {'all': ('ks/css/admin.css', )}
@@ -108,53 +125,49 @@ class PageAdmin (admin.ModelAdmin):
 class RegionInline (admin.TabularInline):
   model = TemplateRegion
   
-class TemplateAdmin (admin.ModelAdmin):
+class TemplateAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('name', 'template')
   inlines = (RegionInline,)
   
-  class Media:
-    js = ADMIN_QUERY_JS
-    
-class ImageAdmin (admin.ModelAdmin):
-  list_display = ('title', 'file', 'Thumbnail', 'added_by', 'view')
-  list_filter = ('added_by',)
+class ImageAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('title', 'file', 'Thumbnail', 'view')
   search_fields = ('title', 'file')
-  exclude = ('added_by',)
   
-  class Media:
-    js = ADMIN_QUERY_JS
-    
-  def save_model (self, request, obj, form, change):
-    obj.added_by = request.user
-    return super(ImageAdmin, self).save_model(request, obj, form, change)
-    
-class FileAdmin (admin.ModelAdmin):
-  list_display = ('title', 'file', 'added_by')
-  list_filter = ('added_by',)
+class ImageSetItemInline (admin.StackedInline):
+  model = ImageSetItem
+  raw_id_fields = ('image',)
+  autocomplete_lookup_fields = {
+    'fk': ['image'],
+  }
+  
+  fields = ('image', 'caption', 'caption_url', 'credit', 'credit_url', 'sorder')
+  sortable_field_name = "sorder"
+  formfield_overrides = {
+    models.IntegerField: {'widget': forms.HiddenInput},
+  }
+  
+class ImageSetAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('title', 'Thumbnails')
+  search_fields = ('title',)
+  inlines = (ImageSetItemInline,)
+  
+class FileAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('title', 'file')
   search_fields = ('title', 'file')
-  exclude = ('added_by',)
   
-  class Media:
-    js = ADMIN_QUERY_JS
-    
-  def save_model (self, request, obj, form, change):
-    obj.added_by = request.user
-    return super(FileAdmin, self).save_model(request, obj, form, change)
-    
-class BlurbAdmin (admin.ModelAdmin):
+class BlurbAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'slug')
   search_fields = ('title', 'slug')
   formfield_overrides = {
     models.TextField: {'widget': RichText},
   }
   
-  class Media:
-    js = ADMIN_QUERY_JS
-    
+admin.site.register(Author, AuthorAdmin)
 admin.site.register(Redirect, ReAdmin)
 admin.site.register(Page, PageAdmin)
 admin.site.register(Template, TemplateAdmin)
 admin.site.register(Image, ImageAdmin)
+admin.site.register(ImageSet, ImageSetAdmin)
 admin.site.register(File, FileAdmin)
 admin.site.register(Blurb, BlurbAdmin)
 
