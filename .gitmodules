@@ -1,0 +1,3 @@
+[submodule "pizza/pagination"]
+	path = pizza/pagination
+	url = git@github.com:pizzapanther/Django-Next-Please.git
