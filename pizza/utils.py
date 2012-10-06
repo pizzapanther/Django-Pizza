@@ -1,10 +1,15 @@
+import datetime
 import hashlib
 
 from django.conf import settings
 from django.core.cache import cache
+from django.utils.timezone import utc
 
 PIZZA_CACHE_TIMEOUT = getattr(settings, 'PIZZA_CACHE_TIMEOUT', 600)
 
+def now ():
+  return datetime.datetime.utcnow().replace(tzinfo=utc)
+  
 def post_render (response, key, timeout):
   cache.set(key, response, timeout)
   

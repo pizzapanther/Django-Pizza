@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.sites.models import Site
 
 from pizza.kitchen_sink.models import SitesMixin
+from pizza.utils import now
 
 class Blog (SitesMixin, models.Model):
   title = models.CharField(max_length=255)
@@ -12,6 +13,9 @@ class Blog (SitesMixin, models.Model):
   
   sites = models.ManyToManyField(Site, blank=True, null=True)
   
+  def published (self):
+    return self.post_set.filter(publish__lte=now())
+    
   @staticmethod
   def autocomplete_search_fields():
     return ("id__iexact", "title__icontains")
