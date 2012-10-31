@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.sites.models import Site
 
-from pizza.kitchen_sink.models import SitesMixin
+from pizza.kitchen_sink.models import SitesMixin, SlideshowMixin
 from pizza.utils import now
 
 class Blog (SitesMixin, models.Model):
@@ -41,7 +41,7 @@ class Category (models.Model):
   def __unicode__ (self):
     return self.title
     
-class Post (models.Model):
+class Post (SlideshowMixin, models.Model):
   blog = models.ForeignKey(Blog)
   
   title = models.CharField(max_length=255)

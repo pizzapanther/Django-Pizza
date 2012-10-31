@@ -18,6 +18,7 @@ from django.core.urlresolvers import reverse
 
 from .widgets import RichText
 from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
+from pizza.utils import cached_method
 
 from sorl.thumbnail import get_thumbnail
 
@@ -38,6 +39,29 @@ class SitesMixin (object):
       
     if ret:
       ret = ret[:-2]
+      
+    return ret
+    
+class SlideshowMixin (object):
+  @cached_method
+  def first_image (self):
+    if self.imageset:
+      if self.imageset.imagesetitem_set.all().count() > 0:
+        return self.imageset.imagesetitem_set.all()[0].image
+        
+    if self.image:
+      return self.image
+      
+    return None
+    
+  @cached_method
+  def image_list (self):
+    ret = []
+    if self.imageset:
+      return self.imageset.imagesetitem_set.all()
+      
+    elif self.image:
+      ret.append(self.image)
       
     return ret
     
@@ -106,6 +130,18 @@ class Image (ViewFileMixin, models.Model):
     
   Thumbnail.allow_tags = True
   
+  def cap (self):
+    return self.caption
+    
+  def cap_url (self):
+    return self.caption_url
+    
+  def cred (self):
+    return self.credit
+    
+  def cred_url (self):
+    return self.credit_url
+    
 CAPTYPES = (
   ('override', 'Use image captions and credits, and override if filled in below.'),
   ('mine', 'Use captions and credits from below only'),
@@ -153,6 +189,33 @@ class ImageSetItem (models.Model):
     
   class Meta:
     ordering = ("sorder",)
+    
+  def file (self):
+    return self.image.file
+    
+  def cap (self):
+    if self.imageset.captype == 'mine' or self.caption:
+      return self.caption
+      
+    return self.image.caption
+    
+  def cap_url (self):
+    if self.imageset.captype == 'mine' or self.caption_url:
+      return self.caption_url
+    
+    return self.image.caption_url
+    
+  def cred (self):
+    if self.imageset.captype == 'mine' or self.credit:
+      return self.credit
+    
+    return self.image.credit
+    
+  def cred_url (self):
+    if self.imageset.captype == 'mine' or self.credit_url:
+      return self.credit_url
+      
+    return self.image.credit_url
     
 class Author (SitesMixin, models.Model):
   name = models.CharField(max_length=255)
