@@ -10,11 +10,23 @@ from .models import Blog, Post
 def blog_index (request, slug=None):
   blog = get_object_or_404(Blog, slug=slug, sites__id=request.pizza_site['id'])
   
+  templates = ('blog/index.html', 'pizza/blog/index.html')
+  mt = 'text/html'
+  
+  fmt = request.GET.get('format', '')
+  if fmt == 'atom':
+    templates = ('blog/index.atom.xml', 'pizza/blog/index.atom.xml')
+    mt = 'application/atom+xml'
+    
+  elif fmt == 'rss':
+    templates = ('blog/index.rss.xml', 'pizza/blog/index.rss.xml')
+    mt = 'application/rss+xml'
+    
   c = {
     'blog': blog,
     'posts': blog.published()
   }
-  return TemplateResponse(request, ('blog/index.html', 'pizza/blog/index.html'), c)
+  return TemplateResponse(request, templates, c, mimetype=mt)
   
 def blog_detail (request, blog=None, slug=None, post=None):
   blog = get_object_or_404(Blog, slug=blog)
