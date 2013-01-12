@@ -3,10 +3,12 @@ from django.db import models
 from django import forms
 from django.template.response import TemplateResponse
 from django.contrib.sites.models import Site
+from django.contrib.admin.widgets import ForeignKeyRawIdWidget
+from django.db.models.fields.related import ManyToOneRel
 
 from .widgets import RichText
 from .models import Page, Version, Redirect, Template, TemplateRegion, Image, \
-                    File, Blurb, Author, ImageSet, ImageSetItem
+                    File, Blurb, Author, ImageSet, ImageSetItem, EDITORTYPES
 
 ADMIN_QUERY_JS = (
   'ks/js/jquery-1.8.0.min.js',
@@ -156,12 +158,63 @@ class FileAdmin (AdminMixin, admin.ModelAdmin):
   search_fields = ('title', 'file')
   
 class BlurbAdmin (AdminMixin, admin.ModelAdmin):
-  list_display = ('title', 'slug')
+  list_display = ('title', 'slug', 'etype', 'Settings')
   search_fields = ('title', 'slug')
-  formfield_overrides = {
-    models.TextField: {'widget': RichText},
-  }
+  list_filter = ('etype',)
+  #formfield_overrides = {
+  #  models.TextField: {'widget': RichText},
+  #}
   
+  def form_field (self, etype, initial=None):
+    if etype == 'image':
+      return forms.ModelChoiceField(
+        queryset=Image.objects.all(),
+        required=False, label='Content',
+        widget=ForeignKeyRawIdWidget(ManyToOneRel(Image, 'id'), admin.site),
+        initial=initial
+      )
+      
+    elif etype == 'rich':
+      return forms.CharField(required=False, label='Content', widget=RichText, initial=initial)
+      
+    elif etype == 'plain':
+      return forms.CharField(required=False, label='Content', widget=forms.Textarea, initial=initial)
+      
+    return forms.CharField(max_length=255, required=False, label='Content', initial=initial, widget=forms.TextInput(attrs={'class': 'vTextField'}))
+    
+  def edit_form (self, obj):
+    class Meta:
+      model = Blurb
+      fields = ('title', 'content')
+      
+    fields = {
+      'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField', 'readonly': 'readonly'})),
+      'content': self.form_field(obj.etype),
+      
+      'Meta': Meta
+    }
+    return type('AdminForm', (forms.ModelForm,), fields)
+    
+  def setting_form (self):
+    class Meta:
+      model = Blurb
+      fields = ('title', 'slug', 'etype')
+      
+    fields = {
+      'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'})),
+      'slug': forms.SlugField(widget=forms.TextInput(attrs={'class': 'vTextField'})),
+      'etype': forms.ChoiceField(label="Content Type", choices=EDITORTYPES),
+      
+      'Meta': Meta
+    }
+    return type('AdminForm', (forms.ModelForm,), fields)
+    
+  def get_form (self, request, obj=None, **kwargs):
+    if obj is None or request.GET.get('settings', '') == '1':
+      return self.setting_form()
+      
+    return self.edit_form(obj)
+    
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Redirect, ReAdmin)
 admin.site.register(Page, PageAdmin)

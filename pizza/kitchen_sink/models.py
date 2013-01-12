@@ -26,6 +26,14 @@ PIZZA_FILE_DIR = getattr(settings, 'PIZZA_FILE_DIR', 'pizza/files/%Y-%m')
 PIZZA_IMAGE_DIR = getattr(settings, 'PIZZA_IMAGE_DIR', 'pizza/images/%Y-%m')
 PIZZA_TEMPLATES = getattr(settings, 'PIZZA_TEMPLATES', ())
 
+EDITORTYPES = (
+  ('rich', 'Rich Text'),
+  ('plain', 'Plain Text'),
+  ('richone', 'Rich One Line Text'),
+  ('plainone', 'Plain One Line Text'),
+  ('image', 'Image')
+)
+
 @receiver(post_save, sender=Site)
 def site_cache (sender, **kwargs):
   cache.delete(PIZZA_SITES_KEY)
@@ -78,7 +86,8 @@ class ViewFileMixin (object):
 class Blurb (models.Model):
   title = models.CharField(max_length=255)
   slug = models.SlugField('Key', unique=True)
-  content = models.TextField()
+  etype = models.CharField("Editor Type", choices=EDITORTYPES, max_length=25)
+  content = models.TextField(blank=True, null=True)
   
   def __unicode__ (self):
     return self.title
@@ -90,6 +99,11 @@ class Blurb (models.Model):
   def autocomplete_search_fields():
     return ("id__iexact", "title__icontains", "slug__icontains")
     
+  def Settings (self):
+    return '<a href="./%d/?settings=1">Edit Settings</a>' % self.id
+    
+  Settings.allow_tags = True
+  
 class File (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
   file = models.FileField(upload_to=PIZZA_FILE_DIR)
@@ -259,14 +273,6 @@ class Template (models.Model):
   def autocomplete_search_fields():
     return ("id__iexact", "name__icontains",)
     
-EDITORTYPES = (
-  ('rich', 'Rich Text'),
-  ('plain', 'Plain Text'),
-  ('richone', 'Rich One Line Text'),
-  ('plainone', 'Plain One Line Text'),
-  ('image', 'Image')
-)
-
 class TemplateRegion (models.Model):
   template = models.ForeignKey(Template)
   name = models.CharField('Display Name', max_length=255)
