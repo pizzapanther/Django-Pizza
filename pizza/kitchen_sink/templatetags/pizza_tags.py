@@ -11,8 +11,11 @@ def get_blurb (bkey):
     b = Blurb.objects.get(slug=bkey)
     
   except models.ObjectDoesNotExist:
-    return '<!-- Blurb for %s was not found -->' % bkey
+    return None
     
   else:
-    return b.content
+    if b.content:
+      return b.content
+      
+    return None
     
