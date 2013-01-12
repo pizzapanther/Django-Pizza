@@ -15,4 +15,4 @@ def get_blurb (bkey):
     
   else:
     return b.content
-  
+    
