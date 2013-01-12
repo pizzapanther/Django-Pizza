@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>{% load url from future %}{% load thumbnail %}
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en-us">
+  <title>{{ SITE_NAME }} Blog</title>
+  <link href="{{ request.build_absolute_uri }}" rel="alternate"></link>
+  <link href="{{ request.build_absolute_uri }}" rel="self"></link>
+  <id>{{ request.build_absolute_uri }}</id>
+  <updated>{{ paginator.current_list.0.publish|date:"c" }}</updated>
+  {% for n in paginator.current_list %}
+  <entry>
+    <title>{{ n.title|striptags }}</title>
+    <link href="http://{{ request.get_host }}{% url "blog_detail" n.slug n.id %}" rel="alternate"></link>
+    <updated>{{ n.publish|date:"c" }}</updated>
+    <author>
+      <name>{{ n.author.name }}</name>
+    </author>
+    <id>https://{{ request.get_host }}{% url "blog_detail" n.slug n.id %}</id>
+    <summary type="html">
+      {% thumbnail n.first_image.file "500x300" upscale=False as im %}
+      &lt;img src="{{ im.url }}" alt="" style="float: right; padding: 0 0 20px 20px;"&gt;
+      {% endthumbnail %}
+      {{ n.body }}
+    </summary>
+  </entry>
+  {% endfor %}
+</feed>
