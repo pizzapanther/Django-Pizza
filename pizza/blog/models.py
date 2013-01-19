@@ -13,7 +13,10 @@ class Blog (SitesMixin, models.Model):
   
   sites = models.ManyToManyField(Site, blank=True, null=True)
   
-  def published (self):
+  def published (self, category=None):
+    if category:
+      return self.post_set.filter(publish__lte=now(), categories=category)
+      
     return self.post_set.filter(publish__lte=now())
     
   @staticmethod
