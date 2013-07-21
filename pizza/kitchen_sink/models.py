@@ -395,10 +395,10 @@ class Version (models.Model):
   
   def get_context (self):
     c = self.get_content()
-    for tr in self.page.template.templateregion_set.all():
-      if tr.etype == 'image' and c.has_key(tr.cvar) and c[tr.cvar]:
+    for cvar, props in PIZZA_TEMPLATES[self.page.tpl]['regions'].items():
+      if props[0] == 'image' and c.has_key(cvar) and c[cvar]:
         try:
-          c[tr.cvar] = Image.objects.get(id=c[tr.cvar])
+          c[cvar] = Image.objects.get(id=c[cvar])
           
         except models.ObjectDoesNotExist:
           pass

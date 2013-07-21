@@ -38,7 +38,7 @@ def page (request):
       }
       
       c.update(context)
-      return TemplateResponse(request, qs[0].template.template, c)
+      return TemplateResponse(request, qs[0].tpl, c)
       
   raise http.Http404
   
