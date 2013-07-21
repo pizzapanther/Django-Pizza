@@ -259,58 +259,13 @@ class Author (SitesMixin, models.Model):
     
   Thumbnail.allow_tags = True
   
-class Template (models.Model):
-  name = models.CharField(max_length=255)
-  template = models.CharField(max_length=255, choices=PIZZA_TEMPLATES)
+TEMPLATES = []
+for key, value in PIZZA_TEMPLATES.items():
+  TEMPLATES.append((key, value['name']))
   
-  def __unicode__ (self):
-    return self.name
-    
-  class Meta:
-    ordering = ("name",)
-    
-  @staticmethod
-  def autocomplete_search_fields():
-    return ("id__iexact", "name__icontains",)
-    
-class TemplateRegion (models.Model):
-  template = models.ForeignKey(Template)
-  name = models.CharField('Display Name', max_length=255)
-  cvar = models.SlugField('Variable Name', max_length=255)
-  etype = models.CharField("Editor Type", choices=EDITORTYPES, max_length=25)
-  
-  order = models.IntegerField('Order')
-  
-  def __unicode__ (self):
-    return self.name
-    
-  class Meta:
-    ordering = ("order",)
-    
-  @staticmethod
-  def autocomplete_search_fields():
-    return ("id__iexact", "name__icontains",)
-    
-  def form_field (self, initial=None):
-    if self.etype == 'image':
-      return forms.ModelChoiceField(
-        queryset=Image.objects.all(),
-        required=False, label=self.name,
-        widget=ForeignKeyRawIdWidget(ManyToOneRel(Image, 'id'), admin.site),
-        initial=initial
-      )
-      
-    elif self.etype == 'rich':
-      return forms.CharField(required=False, label=self.name, widget=RichText, initial=initial)
-      
-    elif self.etype == 'plain':
-      return forms.CharField(required=False, label=self.name, widget=forms.Textarea, initial=initial)
-      
-    return forms.CharField(max_length=255, required=False, label=self.name, initial=initial, widget=forms.TextInput(attrs={'class': 'vTextField'}))
-    
 class Page (SitesMixin, models.Model):
   url = models.CharField('URL', max_length=255, help_text='Examples: / = HomePage, /some_page, /some_page/sub_page')
-  template = models.ForeignKey(Template)
+  tpl = models.CharField("Template", choices=TEMPLATES, max_length=255)
   
   sites = models.ManyToManyField(Site)
   
@@ -358,6 +313,23 @@ class Page (SitesMixin, models.Model):
   def unpublished_versions (self):
     return self.version_set.filter(publish__isnull=True)
     
+  def form_field (self, etype, name, initial=None):
+    if etype == 'image':
+      return forms.ModelChoiceField(
+        queryset=Image.objects.all(),
+        required=False, label=name,
+        widget=ForeignKeyRawIdWidget(ManyToOneRel(Image, 'id'), admin.site),
+        initial=initial
+      )
+      
+    elif etype == 'rich':
+      return forms.CharField(required=False, label=name, widget=RichText, initial=initial)
+      
+    elif etype == 'plain':
+      return forms.CharField(required=False, label=name, widget=forms.Textarea, initial=initial)
+      
+    return forms.CharField(max_length=255, required=False, label=name, initial=initial, widget=forms.TextInput(attrs={'class': 'vTextField'}))
+    
   def admin_form (self, version):
     class Meta:
       model = Version
@@ -373,12 +345,12 @@ class Page (SitesMixin, models.Model):
     }
     
     content = version.get_content()
-    for tr in self.template.templateregion_set.all():
+    for cvar, props in PIZZA_TEMPLATES[self.tpl]['regions'].items():
       initial = None
-      if content.has_key(tr.cvar):
-        initial = content[tr.cvar]
+      if content.has_key(cvar):
+        initial = content[cvar]
         
-      fields['generatedfield_' + tr.cvar] = tr.form_field(initial=initial)
+      fields['generatedfield_' + cvar] = self.form_field(*props, initial=initial)
       
     return type('AdminForm', (forms.ModelForm,), fields)
     

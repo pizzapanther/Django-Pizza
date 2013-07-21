@@ -7,8 +7,8 @@ from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.db.models.fields.related import ManyToOneRel
 
 from .widgets import RichText
-from .models import Page, Version, Redirect, Template, TemplateRegion, Image, \
-                    File, Blurb, Author, ImageSet, ImageSetItem, EDITORTYPES
+from .models import Page, Version, Redirect, Image, File, Blurb, Author, \
+                    ImageSet, ImageSetItem, EDITORTYPES
 
 ADMIN_QUERY_JS = (
   'ks/js/jquery-1.8.0.min.js',
@@ -39,8 +39,8 @@ class ReAdmin (AdminMixin, admin.ModelAdmin):
   filter_horizontal = ('sites',)
   
 class PageAdmin (admin.ModelAdmin):
-  list_display = ('url', 'template', '_sites', 'Settings', 'View_Published', 'Versions')
-  list_filter = ('sites', 'template')
+  list_display = ('url', 'tpl', '_sites', 'Settings', 'View_Published', 'Versions')
+  list_filter = ('sites', 'tpl')
   search_fields = ('url',)
   filter_horizontal = ('sites',)
   
@@ -124,13 +124,6 @@ class PageAdmin (admin.ModelAdmin):
       
     return super(PageAdmin, self).save_model(request, obj, form, change)
     
-class RegionInline (admin.TabularInline):
-  model = TemplateRegion
-  
-class TemplateAdmin (AdminMixin, admin.ModelAdmin):
-  list_display = ('name', 'template')
-  inlines = (RegionInline,)
-  
 class ImageAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'file', 'Thumbnail', 'view')
   search_fields = ('title', 'file')
@@ -218,7 +211,6 @@ class BlurbAdmin (AdminMixin, admin.ModelAdmin):
 admin.site.register(Author, AuthorAdmin)
 admin.site.register(Redirect, ReAdmin)
 admin.site.register(Page, PageAdmin)
-admin.site.register(Template, TemplateAdmin)
 admin.site.register(Image, ImageAdmin)
 admin.site.register(ImageSet, ImageSetAdmin)
 admin.site.register(File, FileAdmin)
