@@ -24,7 +24,7 @@ from sorl.thumbnail import get_thumbnail
 
 PIZZA_FILE_DIR = getattr(settings, 'PIZZA_FILE_DIR', 'pizza/files/%Y-%m')
 PIZZA_IMAGE_DIR = getattr(settings, 'PIZZA_IMAGE_DIR', 'pizza/images/%Y-%m')
-PIZZA_TEMPLATES = getattr(settings, 'PIZZA_TEMPLATES', ())
+PIZZA_TEMPLATES = getattr(settings, 'PIZZA_TEMPLATES', {})
 
 EDITORTYPES = (
   ('rich', 'Rich Text'),
