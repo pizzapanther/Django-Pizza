@@ -5,6 +5,7 @@ from django.template.response import TemplateResponse
 from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.core.urlresolvers import resolve
 
 from sorl.thumbnail import get_thumbnail
 
@@ -39,6 +40,15 @@ def page (request):
       
       c.update(context)
       return TemplateResponse(request, qs[0].tpl, c)
+      
+  if not request.path.endswith('/'):
+    match = resolve(request.path + '/')
+    if match.url_name != 'pizza.utils.wrapper':
+      url = request.path + '/'
+      if request.META['QUERY_STRING']:
+        url += '?' + request.META['QUERY_STRING']
+        
+      return http.HttpResponseRedirect(url)
       
   raise http.Http404
   
