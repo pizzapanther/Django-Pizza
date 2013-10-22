@@ -59,6 +59,9 @@ class PageAdmin (admin.ModelAdmin):
     return super(PageAdmin, self).get_form(request, obj=obj, **kwargs)
     
   def get_object (self, request, object_id):
+    if request.path.endswith('/delete/'):
+      return super(PageAdmin, self).get_object(request, object_id)
+      
     if request.GET.get('settings', '') != '1':
       ver = request.GET.get('version', '')
       page = super(PageAdmin, self).get_object(request, object_id)
