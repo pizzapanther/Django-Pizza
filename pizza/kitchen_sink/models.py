@@ -263,6 +263,12 @@ TEMPLATES = []
 for key, value in PIZZA_TEMPLATES.items():
   TEMPLATES.append((key, value['name']))
   
+class ModelForm (forms.ModelForm):
+  def save (self, *args, **kw):
+    instance = super(ModelForm, self).save(*args, **kw)
+    instance.cleaned_data = self.cleaned_data
+    return instance
+    
 class Page (SitesMixin, models.Model):
   url = models.CharField('URL', max_length=255, help_text='Examples: / = HomePage, /some_page, /some_page/sub_page')
   tpl = models.CharField("Template", choices=TEMPLATES, max_length=255)
@@ -313,46 +319,118 @@ class Page (SitesMixin, models.Model):
   def unpublished_versions (self):
     return self.version_set.filter(publish__isnull=True)
     
-  def form_field (self, etype, name, initial=None):
+  def form_field (self, etype, name, initial=None, req=False):
     if etype == 'image':
       return forms.ModelChoiceField(
         queryset=Image.objects.all(),
-        required=False, label=name,
+        required=req, label=name,
         widget=ForeignKeyRawIdWidget(ManyToOneRel(Image, 'id'), admin.site),
         initial=initial
       )
       
     elif etype == 'rich':
-      return forms.CharField(required=False, label=name, widget=RichText, initial=initial)
+      return forms.CharField(required=req, label=name, widget=RichText, initial=initial)
       
     elif etype == 'plain':
-      return forms.CharField(required=False, label=name, widget=forms.Textarea, initial=initial)
+      return forms.CharField(required=req, label=name, widget=forms.Textarea, initial=initial)
       
-    return forms.CharField(max_length=255, required=False, label=name, initial=initial, widget=forms.TextInput(attrs={'class': 'vTextField'}))
+    return forms.CharField(max_length=255, required=req, label=name, initial=initial, widget=forms.TextInput(attrs={'class': 'vTextField'}))
     
-  def admin_form (self, version):
-    class Meta:
-      model = Version
-      exclude = ('page', 'content')
+  def admin_form (self, version, regions=None, inline=None):
+    if regions and inline:
+      class Meta:
+        model = Version
+        exclude = ('page', 'content', 'title', 'keywords', 'desc', 'publish')
+        
+      fields = {
+        'inline': inline,
+        'Meta': Meta
+      }
       
-    fields = {
-      'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'})),
-      'keywords': forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
-      'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
-      'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime),
+    else:
+      class Meta:
+        model = Version
+        exclude = ('page', 'content')
+        
+      fields = {
+        'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'})),
+        'keywords': forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
+        'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
+        'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime),
+        
+        'Meta': Meta
+      }
       
-      'Meta': Meta
-    }
-    
+      regions = PIZZA_TEMPLATES[self.tpl]['regions']
+      
     content = version.get_content()
-    for cvar, props in PIZZA_TEMPLATES[self.tpl]['regions'].items():
+    if inline:
+      content = {}
+      
+    req = True
+    for cvar, props in regions.items():
       initial = None
       if content.has_key(cvar):
         initial = content[cvar]
         
-      fields['generatedfield_' + cvar] = self.form_field(*props, initial=initial)
+      fields['generatedfield_' + cvar] = self.form_field(*props, initial=initial, req=req)
+      req = False
       
-    return type('AdminForm', (forms.ModelForm,), fields)
+    if regions and inline:
+      fields['DELETE'] = forms.BooleanField(label='Delete', required=False)
+      
+    return type('AdminForm', (ModelForm,), fields)
+    
+  def inlines (self, version):
+    classes = []
+    if 'inlines' in PIZZA_TEMPLATES[self.tpl]:
+      index = 0
+      for key, inline in PIZZA_TEMPLATES[self.tpl]['inlines'].items():
+        iclass = admin.StackedInline
+        iextra = 3
+        imax_num = None
+        iname = None
+        iplural = None
+        
+        if 'type' in inline and inline['type'] == 'table':
+          iclass = admin.TabularInline
+          
+        if 'extra' in inline:
+          iextra = inline['extra']
+          
+        if 'max_num' in inline:
+          imax_num = inline['max_num']
+          
+        if 'verbose_name' in inline:
+          iname = inline['verbose_name']
+          
+        if 'verbose_name_plural' in inline:
+          iplural = inline['verbose_name_plural']
+          
+        init = []
+        content = version.get_content()
+        if key in content:
+          init_list = content[key]
+          for init_dict in init_list:
+            idict = {}
+            for ikey, value in init_dict.items():
+              idict['generatedfield_' + ikey] = value
+              
+            init.append(idict)
+            
+        class AdminInline (iclass):
+          extra = iextra
+          max_num = imax_num
+          model = Inline
+          verbose_name = iname
+          verbose_name_plural = iplural
+          form = self.admin_form(version, regions=inline['regions'], inline=key)
+          initial = init
+          
+        classes.append(AdminInline)
+        index += 1
+        
+    return classes
     
   def Versions (self):
     return '<div id="view_versions_%d"><a href="javascript: void(0);" onclick="get_versions(%d)">View Versions</a></div>' % (self.id, self.id)
@@ -423,4 +501,14 @@ class Version (models.Model):
   @staticmethod
   def autocomplete_search_fields():
     return ("id__iexact", "title__icontains",)
+    
+class Inline (models.Model):
+  page = models.ForeignKey(Page)
+  
+  def save (self):
+    print 'SKIPPING SAVE'
+    
+  class Meta:
+    verbose_name = " "
+    verbose_name_plural = " "
     

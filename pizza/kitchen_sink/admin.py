@@ -1,10 +1,13 @@
 from django.contrib import admin
 from django.db import models
 from django import forms
+from django.conf import settings
 from django.template.response import TemplateResponse
 from django.contrib.sites.models import Site
 from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.db.models.fields.related import ManyToOneRel
+from django.contrib.admin.util import unquote
+from django.contrib.admin import helpers
 
 from .widgets import RichText
 from .models import Page, Version, Redirect, Image, File, Blurb, Author, \
@@ -124,8 +127,78 @@ class PageAdmin (admin.ModelAdmin):
             cdict[key[15:]] = form.cleaned_data[key]
             
       obj.set_content(cdict)
+      request.obj = obj
       
     return super(PageAdmin, self).save_model(request, obj, form, change)
+    
+  def save_formset (self, request, form, formset, change):
+    for f in formset:
+      key = f.inline
+      break
+      
+    cdict = request.obj.get_content()
+    cdict[key] = []
+    instances = formset.save(commit=False)
+    for inline in instances:
+      d = {}
+      for ikey, value in inline.cleaned_data.items():
+        if ikey.startswith('generatedfield_'):
+          if hasattr(value, 'id'):
+            d[ikey[15:]] = value.id
+            
+          else:
+            d[ikey[15:]] = value
+            
+      cdict[key].append(d)
+      
+    request.obj.set_content(cdict)
+    request.obj.save()
+    
+  def get_inline_instances (self, request, obj=None):
+    inline_instances = []
+    if obj and hasattr(obj, 'page'):
+      for inline_class in obj.page.inlines(obj):
+        inline = inline_class(self.model, self.admin_site)
+        inline_instances.append(inline)
+        
+    return inline_instances
+    
+  def change_view (self, request, object_id, form_url='', extra_context=None):
+    ret = super(PageAdmin, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
+    if request.method == 'GET' and isinstance(ret, TemplateResponse):
+      if not ret.is_rendered:
+        obj = self.get_object(request, unquote(object_id))
+        ret.context_data['inline_admin_formsets'] = self.regenerate_inlines(request, obj)
+        
+    return ret
+    
+  def regenerate_inlines (self, request, obj):
+    ModelForm = self.get_form(request, obj)
+    formsets = []
+    form = ModelForm(instance=obj)
+    inline_instances = self.get_inline_instances(request, obj)
+    prefixes = {}
+    for FormSet, inline in zip(self.get_formsets(request, obj), inline_instances):
+      prefix = FormSet.get_default_prefix()
+      prefixes[prefix] = prefixes.get(prefix, 0) + 1
+      if prefixes[prefix] != 1 or not prefix:
+        prefix = "%s-%s" % (prefix, prefixes[prefix])
+        
+      formset = FormSet(instance=obj, prefix=prefix, initial=inline.initial)
+      formsets.append(formset)
+      
+    inline_admin_formsets = []
+    for inline, formset in zip(inline_instances, formsets):
+      fieldsets = list(inline.get_fieldsets(request, obj))
+      readonly = list(inline.get_readonly_fields(request, obj))
+      prepopulated = dict(inline.get_prepopulated_fields(request))
+      
+      inline_admin_formset = helpers.InlineAdminFormSet(inline, formset,
+          fieldsets, prepopulated, readonly, model_admin=self)
+          
+      inline_admin_formsets.append(inline_admin_formset)
+      
+    return inline_admin_formsets
     
 class ImageAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'file', 'Thumbnail', 'view')
@@ -139,11 +212,13 @@ class ImageSetItemInline (admin.StackedInline):
   }
   
   fields = ('image', 'caption', 'caption_url', 'credit', 'credit_url', 'sorder')
-  sortable_field_name = "sorder"
-  formfield_overrides = {
-    models.IntegerField: {'widget': forms.HiddenInput},
-  }
-  
+  if 'grappelli' in settings.INSTALLED_APPS:
+    sortable_field_name = "sorder"
+    
+    formfield_overrides = {
+      models.IntegerField: {'widget': forms.HiddenInput},
+    }
+    
 class ImageSetAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'Thumbnails')
   search_fields = ('title',)
