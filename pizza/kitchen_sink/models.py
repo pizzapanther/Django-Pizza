@@ -480,7 +480,19 @@ class Version (models.Model):
           
         except models.ObjectDoesNotExist:
           pass
-        
+          
+    if 'inlines' in PIZZA_TEMPLATES[self.page.tpl]:
+      for inline, idict in PIZZA_TEMPLATES[self.page.tpl]['inlines'].items():
+        for i in range(0, len(c[inline])):
+          for cvar, props in idict['regions'].items():
+            myc = c[inline][i]
+            if props[0] == 'image' and myc.has_key(cvar) and myc[cvar]:
+              try:
+                myc[cvar] = Image.objects.get(id=myc[cvar])
+                
+              except models.ObjectDoesNotExist:
+                pass
+                
     return c
     
   def get_content (self):
