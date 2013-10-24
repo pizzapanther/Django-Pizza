@@ -368,7 +368,7 @@ class Page (SitesMixin, models.Model):
     if regions and inline:
       class Meta:
         model = Version
-        exclude = ('page', 'content', 'title', 'keywords', 'desc', 'publish')
+        exclude = ('page', 'content', 'title', 'keywords', 'desc', 'publish', 'version', 'icnt')
         
       fields = {
         'inline': inline,
@@ -381,9 +381,9 @@ class Page (SitesMixin, models.Model):
         exclude = ('page', 'content')
         
       fields = {
-        'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'})),
-        'keywords': forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
-        'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
+        'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.title),
+        'keywords': forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.keywords),
+        'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.desc),
         'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime),
         
         'Meta': Meta,
@@ -403,9 +403,6 @@ class Page (SitesMixin, models.Model):
         
       fields['generatedfield_' + cvar] = self.form_field(*props, initial=initial, req=req)
       req = False
-      
-    if regions and inline:
-      fields['DELETE'] = forms.BooleanField(label='Delete', required=False)
       
     if regions and inline:
       return type('AdminForm', (ModelForm,), fields)
@@ -555,9 +552,10 @@ class Version (models.Model):
     
 class Inline (models.Model):
   page = models.ForeignKey(Page)
+  icnt = models.IntegerField()
   
-  def save (self):
-    print 'SKIPPING SAVE'
+  def __unicode__ (self):
+    return ""
     
   class Meta:
     verbose_name = " "

@@ -11,7 +11,7 @@ from django.contrib.admin import helpers
 
 from .widgets import RichText
 from .models import Page, Version, Redirect, Image, File, Blurb, Author, \
-                    ImageSet, ImageSetItem, EDITORTYPES
+                    ImageSet, ImageSetItem, Inline, EDITORTYPES
 
 ADMIN_QUERY_JS = (
   'ks/js/jquery-1.8.0.min.js',
@@ -56,26 +56,28 @@ class PageAdmin (admin.ModelAdmin):
     )
     
   def get_form (self, request, obj=None, **kwargs):
-    if obj and obj.__class__.__name__ == 'Version':
-      return obj.page.admin_form(obj)
+    if request.version:
+      return obj.admin_form(request.version)
       
     return super(PageAdmin, self).get_form(request, obj=obj, **kwargs)
     
   def get_object (self, request, object_id):
-    if request.path.endswith('/delete/'):
-      return super(PageAdmin, self).get_object(request, object_id)
-      
+    request.version = None
+    obj = super(PageAdmin, self).get_object(request, object_id)
+    
     if request.GET.get('settings', '') != '1':
       ver = request.GET.get('version', '')
       page = super(PageAdmin, self).get_object(request, object_id)
       if ver:
         ret = page.version_set.get(id=ver)
         ret.publish = None
-        return ret
+        request.version = ret
+        return obj
         
       qs = page.version_set.filter(publish__isnull=True)
       if qs.count() > 0:
-        return qs[0]
+        request.version = qs[0]
+        return obj
         
       else:
         qs = page.version_set.all()
@@ -87,11 +89,12 @@ class PageAdmin (admin.ModelAdmin):
             desc=qs[0].desc,
             content=qs[0].content
           )
-          return obj
+          request.version = obj
           
-      return Version(page=page)
+      request.version = Version(page=page)
+      return obj
       
-    return super(PageAdmin, self).get_object(request, object_id)
+    return obj
     
   def response_change (self, request, obj):
     if obj and obj.__class__.__name__ == 'Version':
@@ -116,7 +119,7 @@ class PageAdmin (admin.ModelAdmin):
     return TemplateResponse(request, 'ks/admin_versions.html', {'page': obj.page})
     
   def save_model (self, request, obj, form, change):
-    if obj and obj.__class__.__name__ == 'Version':
+    if request.version:
       cdict = {}
       for key in form.cleaned_data.keys():
         if key.startswith('generatedfield_'):
@@ -126,19 +129,27 @@ class PageAdmin (admin.ModelAdmin):
           else:
             cdict[key[15:]] = form.cleaned_data[key]
             
-      obj.set_content(cdict)
-      request.obj = obj
+      request.version.title = form.cleaned_data['title']
+      request.version.keywords = form.cleaned_data['keywords']
+      request.version.desc = form.cleaned_data['desc']
+      request.version.publish = form.cleaned_data['publish']
       
-    return super(PageAdmin, self).save_model(request, obj, form, change)
-    
+      request.version.set_content(cdict)
+      request.version.save()
+      
+    else:
+      super(PageAdmin, self).save_model(request, obj, form, change)
+      
   def save_formset (self, request, form, formset, change):
     for f in formset:
       key = f.inline
       break
       
-    cdict = request.obj.get_content()
+    cdict = request.version.get_content()
     cdict[key] = []
     instances = formset.save(commit=False)
+    
+    count = 0
     for inline in instances:
       d = {}
       for ikey, value in inline.cleaned_data.items():
@@ -149,15 +160,25 @@ class PageAdmin (admin.ModelAdmin):
           else:
             d[ikey[15:]] = value
             
+      qs = Inline.objects.filter(page=request.version.page, icnt=count)
+      if qs.count() == 0:
+        iobj = Inline(page=request.version.page, icnt=count)
+        iobj.save()
+        
+      else:
+        iobj = qs[0]
+        
+      d['iid'] = iobj.id
       cdict[key].append(d)
+      count += 1
       
-    request.obj.set_content(cdict)
-    request.obj.save()
+    request.version.set_content(cdict)
+    request.version.save()
     
   def get_inline_instances (self, request, obj=None):
     inline_instances = []
-    if obj and hasattr(obj, 'page'):
-      for inline_class in obj.page.inlines(obj):
+    if request.version:
+      for inline_class in request.version.page.inlines(request.version):
         inline = inline_class(self.model, self.admin_site)
         inline_instances.append(inline)
         
@@ -175,6 +196,7 @@ class PageAdmin (admin.ModelAdmin):
   def regenerate_inlines (self, request, obj):
     ModelForm = self.get_form(request, obj)
     formsets = []
+    
     form = ModelForm(instance=obj)
     inline_instances = self.get_inline_instances(request, obj)
     prefixes = {}
@@ -184,7 +206,26 @@ class PageAdmin (admin.ModelAdmin):
       if prefixes[prefix] != 1 or not prefix:
         prefix = "%s-%s" % (prefix, prefixes[prefix])
         
-      formset = FormSet(instance=obj, prefix=prefix, initial=inline.initial)
+      init_post = {}
+      count = 0
+      for i, init in enumerate(inline.initial):
+        param = '%s-%d-%s' % (prefix, i, 'id')
+        if 'generatedfield_iid' in init:
+          iobj = Inline.objects.get(id=init['generatedfield_iid'])
+          del init['generatedfield_iid']
+          init_post[param] = str(iobj.id)
+          
+          for k, value in init.items():
+            param = '%s-%d-%s' % (prefix, i, k)
+            init_post[param] = value
+            
+          count += 1
+          
+      init_post[prefix + '-TOTAL_FORMS'] = str(count + inline.extra)
+      init_post[prefix + '-INITIAL_FORMS'] = str(count)
+      init_post[prefix + '-MAX_NUM_FORMS'] = str(inline.max_num)
+      
+      formset = FormSet(init_post, instance=obj, prefix=prefix, queryset=inline.queryset(request))
       formsets.append(formset)
       
     inline_admin_formsets = []
