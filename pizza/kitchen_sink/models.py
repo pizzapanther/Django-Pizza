@@ -287,6 +287,16 @@ class ModelForm (forms.ModelForm):
     instance.cleaned_data = self.cleaned_data
     return instance
     
+class CleanPublish (object):
+  def clean_publish (self):
+    data = self.cleaned_data['publish']
+    if data:
+      now = datetime.datetime.now()
+      if data < now:
+        raise forms.ValidationError("Publish must be in the future")
+        
+    return data
+    
 class Page (SitesMixin, models.Model):
   url = models.CharField('URL', max_length=255, help_text='Examples: / = HomePage, /some_page, /some_page/sub_page')
   tpl = models.CharField("Template", choices=TEMPLATES, max_length=255)
@@ -376,7 +386,7 @@ class Page (SitesMixin, models.Model):
         'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'})),
         'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime),
         
-        'Meta': Meta
+        'Meta': Meta,
       }
       
       regions = PIZZA_TEMPLATES[self.tpl]['regions']
@@ -397,7 +407,10 @@ class Page (SitesMixin, models.Model):
     if regions and inline:
       fields['DELETE'] = forms.BooleanField(label='Delete', required=False)
       
-    return type('AdminForm', (ModelForm,), fields)
+    if regions and inline:
+      return type('AdminForm', (ModelForm,), fields)
+      
+    return type('AdminForm', (CleanPublish, ModelForm), fields)
     
   def inlines (self, version):
     classes = []
