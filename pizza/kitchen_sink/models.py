@@ -15,6 +15,7 @@ from django.db.models.signals import post_save
 from django.core.cache import cache
 from django.dispatch import receiver
 from django.core.urlresolvers import reverse
+from django.core.files.storage import get_storage_class
 
 from .widgets import RichText
 from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
@@ -26,6 +27,23 @@ PIZZA_FILE_DIR = getattr(settings, 'PIZZA_FILE_DIR', 'pizza/files/%Y-%m')
 PIZZA_IMAGE_DIR = getattr(settings, 'PIZZA_IMAGE_DIR', 'pizza/images/%Y-%m')
 PIZZA_TEMPLATES = getattr(settings, 'PIZZA_TEMPLATES', {})
 
+def gen_path (instance, filename, base):
+  sclass = get_storage_class()
+  storage = sclass()
+  
+  while 1:
+    path = datetime.datetime.now().strftime(base + '/%d%H%M%S%f_') + filename
+    if not storage.exists(path):
+      break
+      
+  return path
+  
+def file_path (instance, filename):
+  return gen_path(instance, filename, PIZZA_FILE_DIR)
+  
+def image_path (instance, filename):
+  return gen_path(instance, filename, PIZZA_IMAGE_DIR)
+  
 EDITORTYPES = (
   ('rich', 'Rich Text'),
   ('plain', 'Plain Text'),
@@ -106,7 +124,7 @@ class Blurb (models.Model):
   
 class File (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
-  file = models.FileField(upload_to=PIZZA_FILE_DIR)
+  file = models.FileField(upload_to=file_path)
   
   @staticmethod
   def autocomplete_search_fields():
@@ -120,7 +138,7 @@ class File (ViewFileMixin, models.Model):
     
 class Image (ViewFileMixin, models.Model):
   title = models.CharField(max_length=255)
-  file = models.ImageField(upload_to=PIZZA_IMAGE_DIR)
+  file = models.ImageField(upload_to=image_path)
   
   caption = models.CharField(max_length=255, blank=True, null=True)
   caption_url = models.CharField('Caption URL', max_length=255, blank=True, null=True)
