@@ -470,10 +470,18 @@ class Page (SitesMixin, models.Model):
   
   def View_Published (self):
     edit_url = reverse('kitchen_sink:admin_editon')
-    goto = urllib.quote('http://' + self.sites.all()[0].domain + self.url + '?preview=1')
-    return '<a href="%s" target="_blank">View</a>&nbsp; -&nbsp;<a href="%s?goto=%s" target="_blank">Edit on Site</a>' % (self.url, edit_url, goto)
+    goto = urllib.quote('//' + self.domain() + self.url + '?preview=1')
+    data = {'url': self.url, 'edit': edit_url, 'goto': goto, 'domain': self.domain()}
+    return '<a href="//%(domain)s%(url)s" target="_blank">View</a>&nbsp; -&nbsp;<a href="%(edit)s?goto=%(goto)s" target="_blank">Edit on Site</a>' % data
     
   View_Published.allow_tags = True
+  
+  @cached_method
+  def domain (self):
+    if self.sites.all().count() > 0:
+      return self.sites.all()[0].domain
+      
+    return ''
     
 class Redirect (SitesMixin, models.Model):
   url = models.CharField('URL', max_length=255, help_text='Examples: /, /some_page, /some_page/sub_page')

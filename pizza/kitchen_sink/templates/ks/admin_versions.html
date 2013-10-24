@@ -6,7 +6,7 @@
       {% if v.publish %}{{ v.publish|date:"M D, Y @ P" }}{% else %}Unpublished{% endif %}
     </td>
     <td>
-      <a href="{{ page.url }}?version={{ v.id }}" target="_blank">View</a>&nbsp; &sdot;&nbsp; <a href="./{{ page.id }}/?version={{ v.id }}">Edit From</a>
+      <a href="//{{ page.domain }}{{ page.url }}?version={{ v.id }}" target="_blank">View</a>&nbsp; &sdot;&nbsp; <a href="./{{ page.id }}/?version={{ v.id }}">Edit From</a>
     </td>
   </tr>
   {% endfor %}
