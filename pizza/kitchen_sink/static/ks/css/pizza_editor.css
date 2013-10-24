@@ -1,0 +1,9 @@
+.form-horizontal .inline-related span.cke_voice_label,
+.form-horizontal .inline-related span.cke_button_label,
+.form-horizontal .inline-related span.cke_combo_label {
+  display: none;
+}
+
+.form-horizontal .inline-related span.cke_bottom {
+  display: block;
+}
