@@ -96,12 +96,6 @@ class PageAdmin (admin.ModelAdmin):
       
     return obj
     
-  def response_change (self, request, obj):
-    if obj and obj.__class__.__name__ == 'Version':
-      obj = obj.page
-      
-    return super(PageAdmin, self).response_change(request, obj)
-    
   def get_urls (self):
     from django.conf.urls import patterns, url
     
@@ -116,7 +110,7 @@ class PageAdmin (admin.ModelAdmin):
       raise PermissionDenied
       
     obj = self.get_object(request, object_id)
-    return TemplateResponse(request, 'ks/admin_versions.html', {'page': obj.page})
+    return TemplateResponse(request, 'ks/admin_versions.html', {'page': obj})
     
   def save_model (self, request, obj, form, change):
     if request.version:
