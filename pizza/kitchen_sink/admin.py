@@ -56,7 +56,7 @@ class PageAdmin (admin.ModelAdmin):
     )
     
   def get_form (self, request, obj=None, **kwargs):
-    if request.version:
+    if hasattr(request, 'version') and request.version:
       return obj.admin_form(request.version)
       
     return super(PageAdmin, self).get_form(request, obj=obj, **kwargs)
@@ -113,7 +113,7 @@ class PageAdmin (admin.ModelAdmin):
     return TemplateResponse(request, 'ks/admin_versions.html', {'page': obj})
     
   def save_model (self, request, obj, form, change):
-    if request.version:
+    if hasattr(request, 'version') and request.version:
       cdict = {}
       for key in form.cleaned_data.keys():
         if key.startswith('generatedfield_'):
@@ -171,7 +171,7 @@ class PageAdmin (admin.ModelAdmin):
     
   def get_inline_instances (self, request, obj=None):
     inline_instances = []
-    if request.version:
+    if hasattr(request, 'version') and request.version:
       for inline_class in request.version.page.inlines(request.version):
         inline = inline_class(self.model, self.admin_site)
         inline_instances.append(inline)
