@@ -82,14 +82,14 @@ class PageAdmin (admin.ModelAdmin):
       else:
         qs = page.version_set.all()
         if qs.count() > 0:
-          obj = Version(
+          request.version = Version(
             page=qs[0].page,
             title=qs[0].title,
             keywords=qs[0].keywords,
             desc=qs[0].desc,
             content=qs[0].content
           )
-          request.version = obj
+          return obj
           
       request.version = Version(page=page)
       return obj
