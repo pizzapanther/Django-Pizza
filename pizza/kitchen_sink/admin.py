@@ -67,7 +67,7 @@ class PageAdmin (admin.ModelAdmin):
     
     if request.GET.get('settings', '') != '1':
       ver = request.GET.get('version', '')
-      page = super(PageAdmin, self).get_object(request, object_id)
+      page = obj
       if ver:
         ret = page.version_set.get(id=ver)
         ret.publish = None
