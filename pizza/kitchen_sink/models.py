@@ -348,11 +348,13 @@ class Page (SitesMixin, models.Model):
     return self.version_set.filter(publish__isnull=True)
     
   def form_field (self, etype, name, initial=None, req=False):
+    field = models.ForeignKey(Image, blank=True, null=True)
+    
     if etype == 'image':
       return forms.ModelChoiceField(
         queryset=Image.objects.all(),
         required=req, label=name,
-        widget=ForeignKeyRawIdWidget(ManyToOneRel(Image, 'id'), admin.site),
+        widget=ForeignKeyRawIdWidget(ManyToOneRel(field, Image, 'id', related_name='+'), admin.site),
         initial=initial
       )
       
@@ -519,16 +521,17 @@ class Version (models.Model):
           
     if 'inlines' in PIZZA_TEMPLATES[self.page.tpl]:
       for inline, idict in PIZZA_TEMPLATES[self.page.tpl]['inlines'].items():
-        for i in range(0, len(c[inline])):
-          for cvar, props in idict['regions'].items():
-            myc = c[inline][i]
-            if props[0] == 'image' and myc.has_key(cvar) and myc[cvar]:
-              try:
-                myc[cvar] = Image.objects.get(id=myc[cvar])
-                
-              except models.ObjectDoesNotExist:
-                pass
-                
+        if inline in c:
+          for i in range(0, len(c[inline])):
+            for cvar, props in idict['regions'].items():
+              myc = c[inline][i]
+              if props[0] == 'image' and myc.has_key(cvar) and myc[cvar]:
+                try:
+                  myc[cvar] = Image.objects.get(id=myc[cvar])
+                  
+                except models.ObjectDoesNotExist:
+                  pass
+                  
     return c
     
   def get_content (self):

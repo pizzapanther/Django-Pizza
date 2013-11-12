@@ -42,7 +42,7 @@ class RememberAdminQuery:
       other = re.search("^/admin/(\S+?)/(\S+?)/\S+$", request.path)
       found = re.search("^/admin/(\S+?)/(\S+?)/$", request.path)
       clear = request.REQUEST.get('__clearqs', '')
-      pop = request.REQUEST.get('pop', '0')
+      pop = request.REQUEST.get('_popup', '0')
       
       if not other and found:
         key = 'aquery-%s-%s-%s' % (pop, found.group(1), found.group(2))
@@ -55,7 +55,7 @@ class RememberAdminQuery:
             pass
             
           if pop == '1':
-            url = request.path + '?pop=1'
+            url = request.path + '?_popup=1'
             t = request.REQUEST.get('t', '')
             if t:
               url += '&t=' + urllib.quote(t)
