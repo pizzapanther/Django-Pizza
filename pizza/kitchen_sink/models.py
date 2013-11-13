@@ -16,6 +16,7 @@ from django.core.cache import cache
 from django.dispatch import receiver
 from django.core.urlresolvers import reverse
 from django.core.files.storage import get_storage_class
+from django.utils import timezone
 
 from .widgets import RichText
 from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
@@ -32,7 +33,7 @@ def gen_path (instance, filename, base):
   storage = sclass()
   
   while 1:
-    path = datetime.datetime.now().strftime(base + '/%d%H%M%S%f_') + filename
+    path = timezone.now().strftime(base + '/%d%H%M%S%f_') + filename
     if not storage.exists(path):
       break
       
@@ -291,7 +292,7 @@ class CleanPublish (object):
   def clean_publish (self):
     data = self.cleaned_data['publish']
     if data:
-      now = datetime.datetime.now()
+      now = timezone.now()
       if data < now:
         raise forms.ValidationError("Publish must be in the future")
         
@@ -319,7 +320,7 @@ class Page (SitesMixin, models.Model):
   Settings.allow_tags = True
   
   def published_version (self, version=None):
-    now = datetime.datetime.utcnow().replace(tzinfo=utc)
+    now = timezone.now()
     if version:
       qs = self.version_set.filter(id=version)
       
