@@ -1,6 +1,7 @@
 CKEDITOR.editorConfig = function( config ) {
   config.toolbar = 'Full';
   config.scayt_autoStartup = true;
+  config.allowedContent = true;
   
   config.toolbar_Full =
   [
