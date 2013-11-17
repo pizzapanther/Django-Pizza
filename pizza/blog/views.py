@@ -10,6 +10,7 @@ from .models import Blog, Post, Category
 PIZZA_PODCAST_OWNER = getattr(settings, 'PIZZA_PODCAST_OWNER', 'John Doe')
 PIZZA_PODCAST_OWNER_EMAIL = getattr(settings, 'PIZZA_PODCAST_OWNER_EMAIL', 'johndoe@example.com')
 PIZZA_PODCAST_CATEGORY = getattr(settings, 'PIZZA_PODCAST_CATEGORY', 'Technology')
+PIZZA_PODCAST_SUB_CATEGORY = getattr(settings, 'PIZZA_PODCAST_SUB_CATEGORY', 'Podcasting')
 
 def blogs (request, filters={}):
   templates = ('blog/all.html', 'pizza/blog/all.html')
@@ -50,8 +51,9 @@ def blog_index (request, slug=None, category=None, filters={}):
     'ITUNES_OWNER': PIZZA_PODCAST_OWNER,
     'ITUNES_OWNER_EMAIL': PIZZA_PODCAST_OWNER_EMAIL,
     'ITUNES_CATEGORY': PIZZA_PODCAST_CATEGORY,
+    'ITUNES_SUB_CATEGORY': PIZZA_PODCAST_SUB_CATEGORY,
   }
-  return TemplateResponse(request, templates, c, mimetype=mt)
+  return TemplateResponse(request, templates, c, content_type=mt)
   
 def blog_detail (request, blog=None, slug=None, post=None):
   blog = get_object_or_404(Blog, slug=blog, sites__id=request.pizza_site['id'])

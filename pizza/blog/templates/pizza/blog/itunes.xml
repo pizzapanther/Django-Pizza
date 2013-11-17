@@ -2,7 +2,7 @@
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
   <channel>
     <title>{{ blog.title }}</title>
-    <link>http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}{% url "podcast:index" blog.slug %}</link>
+    <link>http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}</link>
     <language>en-us</language>
     <copyright>&#xA9; {{ request.get_host }}</copyright>
     <itunes:subtitle>{{ blog.description|truncatewords:5 }}</itunes:subtitle>
@@ -23,17 +23,22 @@
     {% endthumbnail %}
     {% endif %}
     {% block categories %}
-    <itunes:category text="{{ ITUNES_CATEGORY }}"/>
+    <itunes:category text="{{ ITUNES_CATEGORY }}">
+			<itunes:category text="{{ ITUNES_SUB_CATEGORY }}" />
+		</itunes:category>
     {% endblock %}
+    <itunes:explicit>clean</itunes:explicit>
     {% for post in paginator.current_list %}
     <item>
       <title>{{ post.title }}</title>
-      <itunes:author>{{ post.authors.all.0 }}</itunes:author>
+      {% for a in post.authors.all %}
+      <itunes:author>{{ a }}</itunes:author>
+      {% endfor %}
       <itunes:subtitle>
         {{ post.body|striptags|truncatewords:5 }}
       </itunes:subtitle>
       <itunes:summary>
-        {{ post.body }}
+        {{ post.body|striptags }}
       </itunes:summary>
       {% if post.image %}
       {% thumbnail post.image.file "1400x1400" crop="center" as im %}
