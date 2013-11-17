@@ -17,7 +17,6 @@ setup(
       'pizza.kitchen_sink.templatetags',
       'pizza.blog',
       'pizza.blog.migrations',
-      'pizza.pagination',
     ],
     include_package_data = True,
     classifiers = [
