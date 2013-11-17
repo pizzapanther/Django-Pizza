@@ -3,4 +3,5 @@ include LICENSE
 include requirements.txt
 recursive-include pizza/kitchen_sink/static *
 recursive-include pizza/kitchen_sink/templates *
+recursive-include pizza/blog/templates *
 prune build/*
