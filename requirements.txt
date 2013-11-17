@@ -1,1 +1,4 @@
 sorl-thumbnail>=11.01
+Django-Next-Please
+pytz
+mpeg1audio

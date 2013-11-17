@@ -1,0 +1,7 @@
+from django.conf.urls import patterns, include, url
+
+urlpatterns = patterns('pizza.blog.views',
+  url(r'^$', 'blogs', name='all', kwargs={'filters': {'podcast': False}}),
+  url(r'^(\S+)/(\S+)/$', 'blog_detail', name='detail'),
+  url(r'^(\S+)/$', 'blog_index', name='index', kwargs={'filters': {'podcast': False}}),
+)

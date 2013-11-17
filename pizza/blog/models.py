@@ -1,17 +1,46 @@
+import os
+import mimetypes
+
+mimetypes.init()
+
 from django.db import models
 from django.contrib.sites.models import Site
+from django.utils import timezone
+from django.conf import settings
 
 from pizza.kitchen_sink.models import SitesMixin, SlideshowMixin
 from pizza.utils import now
 
+PIZZA_MEDIA_DIR = getattr(settings, 'PIZZA_MEDIA_DIR', 'pizza/media/%Y-%m')
+
+def file_path (instance, filename):
+  path = timezone.now().strftime(PIZZA_MEDIA_DIR)
+  path = os.path.join(path, instance.post.slug + '.' + instance.ext.ext)
+  
+  return path
+  
+class FileFormat (models.Model):
+  title = models.CharField(max_length=255)
+  ext = models.SlugField('File Extension', max_length=10, help_text='Ex: mp3, m4v, etc')
+  
+  class Meta:
+    ordering = ('title',)
+    
+  def __unicode__ (self):
+    return self.title
+    
 class Blog (SitesMixin, models.Model):
   title = models.CharField(max_length=255)
   slug = models.SlugField(unique=True, max_length=200)
   description = models.TextField()
+  image = models.ForeignKey('kitchen_sink.Image', blank=True, null=True)
+  podcast = models.BooleanField(default=False)
   
   authors = models.ManyToManyField('kitchen_sink.Author', blank=True, null=True)
   
   sites = models.ManyToManyField(Site, blank=True, null=True)
+  
+  formats = models.ManyToManyField(FileFormat, blank=True, null=True)
   
   def published (self, category=None):
     if category:
@@ -49,7 +78,7 @@ class Post (SlideshowMixin, models.Model):
   
   title = models.CharField(max_length=255)
   slug = models.SlugField(unique=True, max_length=200)
-  author = models.ForeignKey('kitchen_sink.Author')
+  authors = models.ManyToManyField('kitchen_sink.Author', blank=True, null=True)
   publish = models.DateTimeField()
   categories = models.ManyToManyField(Category, blank=True, null=True)
   
@@ -81,4 +110,20 @@ class Post (SlideshowMixin, models.Model):
   def related (self, num=5):
     cats = self.categories.all()
     return Post.objects.filter(categories__in=cats).exclude(id=self.id).distinct()[:num]
+    
+class MediaFile (models.Model):
+  file = models.FileField(upload_to=file_path)
+  ext = models.ForeignKey(FileFormat)
+  post = models.ForeignKey(Post)
+  duration = models.CharField(max_length=25, help_text='hh:mm:ss', blank=True, null=True)
+  
+  def __unicode__ (self):
+    return self.file.name
+    
+  def mimetype (self):
+    mtype, encoding = mimetypes.guess_type(self.file.name)
+    if not mtype:
+      mtype = 'application/octet-stream'
+      
+    return mtype
     

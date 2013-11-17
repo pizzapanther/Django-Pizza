@@ -387,7 +387,8 @@ class Page (SitesMixin, models.Model):
         'title': forms.CharField(max_length=255, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.title),
         'keywords': forms.CharField(max_length=255, required=False, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.keywords),
         'desc': forms.CharField(max_length=255, label='Description', required=False, widget=forms.TextInput(attrs={'class': 'vTextField'}), initial=version.desc),
-        'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime),
+        'publish_now': forms.BooleanField(required=False, label='Publish Now'),
+        'publish': forms.DateTimeField(required=False, widget=AdminSplitDateTime, label='Publish On'),
         
         'Meta': Meta,
       }
@@ -464,7 +465,9 @@ class Page (SitesMixin, models.Model):
     return classes
     
   def Versions (self):
-    return '<div id="view_versions_%d"><a href="javascript: void(0);" onclick="get_versions(%d)">View Versions</a></div>' % (self.id, self.id)
+    return """<div id="view_versions_%d">
+      <a href="javascript: void(0);" onclick="get_versions(%d)">View Versions</a>
+    </div>""" % (self.id, self.id)
     
   Versions.allow_tags = True
   

@@ -8,6 +8,9 @@ from django.contrib.admin.widgets import ForeignKeyRawIdWidget
 from django.db.models.fields.related import ManyToOneRel
 from django.contrib.admin.util import unquote
 from django.contrib.admin import helpers
+from django.utils import timezone
+from django import http
+from django.contrib import messages
 
 from .widgets import RichText
 from .models import Page, Version, Redirect, Image, File, Blurb, Author, \
@@ -66,7 +69,10 @@ class PageAdmin (admin.ModelAdmin):
     obj = super(PageAdmin, self).get_object(request, object_id)
     
     if request.GET.get('settings', '') != '1':
-      ver = request.GET.get('version', '')
+      ver = ''
+      if request.method == 'GET':
+        ver = request.GET.get('version', '')
+        
       page = obj
       if ver:
         ret = page.version_set.get(id=ver)
@@ -126,8 +132,12 @@ class PageAdmin (admin.ModelAdmin):
       request.version.title = form.cleaned_data['title']
       request.version.keywords = form.cleaned_data['keywords']
       request.version.desc = form.cleaned_data['desc']
-      request.version.publish = form.cleaned_data['publish']
-      
+      if form.cleaned_data['publish_now']:
+        request.version.publish = timezone.now()
+        
+      else:
+        request.version.publish = form.cleaned_data['publish']
+        
       request.version.set_content(cdict)
       request.version.save()
       
@@ -179,6 +189,15 @@ class PageAdmin (admin.ModelAdmin):
     return inline_instances
     
   def change_view (self, request, object_id, form_url='', extra_context=None):
+    publish_now = request.GET.get('publish_now', '')
+    if publish_now == '1':
+      page = self.get_object(request, unquote(object_id))
+      version = page.version_set.get(publish__isnull=True)
+      version.publish = timezone.now()
+      version.save()
+      self.message_user(request, '%s Published Successfully' % page.url, messages.SUCCESS)
+      return http.HttpResponseRedirect('../')
+      
     ret = super(PageAdmin, self).change_view(request, object_id, form_url=form_url, extra_context=extra_context)
     if request.method == 'GET' and isinstance(ret, TemplateResponse):
       if not ret.is_rendered:
@@ -215,7 +234,18 @@ class PageAdmin (admin.ModelAdmin):
             
           count += 1
           
-      init_post[prefix + '-TOTAL_FORMS'] = str(count + inline.extra)
+      extra = 0
+      if inline.extra:
+        icount = count
+        while icount < inline.max_num and extra < inline.extra:
+          if icount < inline.max_num  and extra < inline.extra:
+            extra += 1
+            icount += 1
+            
+          else:
+            break
+            
+      init_post[prefix + '-TOTAL_FORMS'] = str(count + extra)
       init_post[prefix + '-INITIAL_FORMS'] = str(count)
       init_post[prefix + '-MAX_NUM_FORMS'] = str(inline.max_num)
       

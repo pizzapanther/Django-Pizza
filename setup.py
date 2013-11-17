@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "Django-Pizza",
-    version = '13.11.4',
+    version = '13.11.5',
     description = "Yet another Django CMS.",
     url = "https://github.com/pizzapanther/Django-Pizza",
     author = "Paul Bailey",
@@ -21,7 +21,7 @@ setup(
     ],
     include_package_data = True,
     classifiers = [
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Django',
         'Intended Audience :: Developers',

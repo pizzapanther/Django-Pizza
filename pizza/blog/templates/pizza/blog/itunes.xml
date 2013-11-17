@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>{% load thumbnail pizza_blog %}
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <title>{{ blog.title }}</title>
+    <link>http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}{% url "podcast:index" blog.slug %}</link>
+    <language>en-us</language>
+    <copyright>&#xA9; {{ request.get_host }}</copyright>
+    <itunes:subtitle>{{ blog.description|truncatewords:5 }}</itunes:subtitle>
+    <itunes:author>{{ ITUNES_OWNER }}</itunes:author>
+    <itunes:summary>
+      {{ blog.description }}
+    </itunes:summary>
+    <description>
+      {{ blog.description }}
+    </description>
+    <itunes:owner>
+      <itunes:name>{{ ITUNES_OWNER }}</itunes:name>
+      <itunes:email>{{ ITUNES_OWNER_EMAIL }}</itunes:email>
+    </itunes:owner>
+    {% if blog.image %}
+    {% thumbnail blog.image.file "1400x1400" crop="center" as im %}
+    <itunes:image href="{{ im.url|http_url }}" />
+    {% endthumbnail %}
+    {% endif %}
+    {% block categories %}
+    <itunes:category text="{{ ITUNES_CATEGORY }}"/>
+    {% endblock %}
+    {% for post in paginator.current_list %}
+    <item>
+      <title>{{ post.title }}</title>
+      <itunes:author>{{ post.authors.all.0 }}</itunes:author>
+      <itunes:subtitle>
+        {{ post.body|striptags|truncatewords:5 }}
+      </itunes:subtitle>
+      <itunes:summary>
+        {{ post.body }}
+      </itunes:summary>
+      {% if post.image %}
+      {% thumbnail post.image.file "1400x1400" crop="center" as im %}
+      <itunes:image href="{{ im.url|http_url }}" />
+      {% endthumbnail %}
+      {% endif %}
+      {% with file=post|get_file_format:ftype %}
+      <enclosure url="{{ file.file.url|http_url }}" length="{{ file.file.size }}" type="{{ file.mimetype }}" />
+      <guid>{{ file.file.url|http_url }}</guid>
+      <pubDate>{{ post.publish|date:"r" }}</pubDate>
+      <itunes:duration>{{ file.duration }}</itunes:duration>
+      {% endwith %}
+    </item>
+    {% endfor %}
+  </channel>
+</rss>
