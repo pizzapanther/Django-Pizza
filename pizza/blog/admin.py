@@ -63,7 +63,7 @@ class PostAdmin (AdminMixin, admin.ModelAdmin):
           f.cleaned_data['file'].seek(0)
           
 class FileFormatAdmin (AdminMixin, admin.ModelAdmin):
-  list_display = ('title', 'ext')
+  list_display = ('title', 'ext', 'mtype')
   
 admin.site.register(Post, PostAdmin)
 admin.site.register(Category, CategoryAdmin)

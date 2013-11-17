@@ -22,6 +22,7 @@ def file_path (instance, filename):
 class FileFormat (models.Model):
   title = models.CharField(max_length=255)
   ext = models.SlugField('File Extension', max_length=10, help_text='Ex: mp3, m4v, etc')
+  mtype = models.CharField('Media Type', max_length=25, choices=(('audio', 'Audio'), ('video', 'Video')))
   
   class Meta:
     ordering = ('title',)
