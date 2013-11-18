@@ -269,20 +269,45 @@ class PageAdmin (admin.ModelAdmin):
       
     return inline_admin_formsets
     
-class ImageAdmin (AdminMixin, admin.ModelAdmin):
+class ImageAdmin (admin.ModelAdmin):
   list_display = ('title', 'file', 'Thumbnail', 'view')
   search_fields = ('title', 'file')
   
+  class Media:
+    js = [] 
+    for j in ADMIN_QUERY_JS:
+      js.append(j)
+      
+    js.append('ks/js/admin_image.js')
+    
   def url_view (self, request, object_id):
     obj = self.get_object(request, object_id)
     
     return http.HttpResponse(json.dumps({'url': obj.file.url}), content_type="application/json")
+    
+  def multi_view (self, request):
+    if not self.has_add_permission(request):
+      raise PermissionDenied
+      
+    model = self.model
+    opts = model._meta
+    
+    c = {
+      'title': 'Multi Image Upload',
+      'app_label': opts.app_label,
+      'opts': opts,
+      'media': self.media,
+      'add': True,
+      'has_change_permission': True,
+    }
+    return TemplateResponse(request, 'ks/admin_multi_upload.html', c)
     
   def get_urls (self):
     from django.conf.urls import patterns, url
     
     info = self.model._meta.app_label, self.model._meta.module_name
     urlpatterns = patterns('',
+      url(r'^multi/$', self.multi_view, name='%s_%s_multi' % info),
       url(r'^(.+)/get_url/$', self.url_view, name='%s_%s_url' % info),
     )
     urlpatterns += super(ImageAdmin, self).get_urls()
