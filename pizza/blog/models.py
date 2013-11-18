@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.conf import settings
 
 from pizza.kitchen_sink.models import SitesMixin, SlideshowMixin
-from pizza.utils import now
+from pizza.utils import now, cached_method
 
 PIZZA_MEDIA_DIR = getattr(settings, 'PIZZA_MEDIA_DIR', 'pizza/media/%Y-%m')
 
@@ -43,6 +43,10 @@ class Blog (SitesMixin, models.Model):
   
   formats = models.ManyToManyField(FileFormat, blank=True, null=True)
   
+  @cached_method
+  def categories (self):
+    return Category.objects.filter(post__blog=self).distinct()
+    
   def published (self, category=None):
     if category:
       return self.post_set.filter(publish__lte=now(), categories=category)

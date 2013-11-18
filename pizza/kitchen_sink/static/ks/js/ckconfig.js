@@ -3,6 +3,7 @@ CKEDITOR.editorConfig = function( config ) {
   config.scayt_autoStartup = true;
   config.allowedContent = true;
   
+  config.extraPlugins = 'pizzaimage,pizzafile',
   config.toolbar_Full =
   [
     { name: 'document', items : [ 'Source' ] },
@@ -14,6 +15,7 @@ CKEDITOR.editorConfig = function( config ) {
   	'-','JustifyLeft','JustifyCenter','JustifyRight','JustifyBlock','-','BidiLtr','BidiRtl' ] },
   	{ name: 'links', items : [ 'Link','Unlink','Anchor' ] },
   	{ name: 'insert', items : [ 'Image','Flash','Table','HorizontalRule','SpecialChar','Iframe' ] },
+  	{ name: 'pizza', items : [ 'PizzaImage', 'PizzaFile' ] },
   	'/',
   	{ name: 'styles', items : [ 'Styles','Format', 'Font', 'FontSize' ] },
   	{ name: 'colors', items : [ 'TextColor','BGColor' ] },

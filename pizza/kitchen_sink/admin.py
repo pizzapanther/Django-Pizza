@@ -1,3 +1,5 @@
+import json
+
 from django.contrib import admin
 from django.db import models
 from django import forms
@@ -106,7 +108,9 @@ class PageAdmin (admin.ModelAdmin):
     from django.conf.urls import patterns, url
     
     info = self.model._meta.app_label, self.model._meta.module_name
-    urlpatterns = patterns('', url(r'^(.+)/versions/$', self.versionlist_view, name='%s_%s_versionlist' % info),)
+    urlpatterns = patterns('',
+      url(r'^(.+)/versions/$', self.versionlist_view, name='%s_%s_versionlist' % info),
+    )
     urlpatterns += super(PageAdmin, self).get_urls()
     
     return urlpatterns
@@ -269,6 +273,22 @@ class ImageAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'file', 'Thumbnail', 'view')
   search_fields = ('title', 'file')
   
+  def url_view (self, request, object_id):
+    obj = self.get_object(request, object_id)
+    
+    return http.HttpResponse(json.dumps({'url': obj.file.url}), content_type="application/json")
+    
+  def get_urls (self):
+    from django.conf.urls import patterns, url
+    
+    info = self.model._meta.app_label, self.model._meta.module_name
+    urlpatterns = patterns('',
+      url(r'^(.+)/get_url/$', self.url_view, name='%s_%s_url' % info),
+    )
+    urlpatterns += super(ImageAdmin, self).get_urls()
+    
+    return urlpatterns
+    
 class ImageSetItemInline (admin.StackedInline):
   model = ImageSetItem
   raw_id_fields = ('image',)
@@ -293,6 +313,22 @@ class FileAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'file')
   search_fields = ('title', 'file')
   
+  def url_view (self, request, object_id):
+    obj = self.get_object(request, object_id)
+    
+    return http.HttpResponse(json.dumps({'url': obj.file.url, 'title': obj.title}), content_type="application/json")
+    
+  def get_urls (self):
+    from django.conf.urls import patterns, url
+    
+    info = self.model._meta.app_label, self.model._meta.module_name
+    urlpatterns = patterns('',
+      url(r'^(.+)/get_url/$', self.url_view, name='%s_%s_url' % info),
+    )
+    urlpatterns += super(FileAdmin, self).get_urls()
+    
+    return urlpatterns
+    
 class BlurbAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'slug', 'etype', 'Settings')
   search_fields = ('title', 'slug')
