@@ -11,11 +11,10 @@ $(document).ready(function () {
     });
   }
   
-  if ($('ul.object-tools').length > 0) {
+  patt = /^(Add|Change)/;
+  var title = $('title').html();
+  if (!patt.test(title)) {
     $('ul.object-tools').append('<li><a href="' + url + '">Reset Search &amp; Filters</a></li>');
-  }
-  
-  if ($('ul.grp-object-tools').length > 0) {
     $('ul.grp-object-tools').append('<li><a class="grp-state-focus" href="' + url + '">Reset Search &amp; Filters</a></li>');
   }
 });

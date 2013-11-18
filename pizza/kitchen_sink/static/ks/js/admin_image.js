@@ -4,11 +4,10 @@ $(document).ready(function () {
   if (patt.test(document.location.search)) {}
   
   else {
-    if ($('ul.object-tools').length > 0) {
+    patt = /^(Add|Change)/;
+    var title = $('title').html();
+    if (!patt.test(title)) {
       $('ul.object-tools').append('<li><a href="./multi/">Multi Image Upload</a></li>');
-    }
-    
-    if ($('ul.grp-object-tools').length > 0) {
       $('ul.grp-object-tools').append('<li><a class="grp-state-focus" href="./multi/">Multi Image Upload</a></li>');
     }
   }
