@@ -23,6 +23,11 @@ ADMIN_QUERY_JS = (
   'ks/js/clear_filters.js',
 )
 
+class ImageForm (forms.ModelForm):
+  class Meta:
+    model = Image
+    fields = ['title', 'file']
+    
 class AdminMixin (object):
   class Media:
     js = ADMIN_QUERY_JS
@@ -291,7 +296,18 @@ class ImageAdmin (admin.ModelAdmin):
       
     model = self.model
     opts = model._meta
+    step = 'upload'
+    files = []
     
+    if request.method == 'POST':
+      step = 'titles'
+      for file in request.FILES.getlist('files'):
+        title = file.name
+        form = ImageForm({'title': title}, {'file': file})
+        if form.is_valid():
+          img = form.save()
+          files.append(img)
+          
     c = {
       'title': 'Multi Image Upload',
       'app_label': opts.app_label,
@@ -299,6 +315,8 @@ class ImageAdmin (admin.ModelAdmin):
       'media': self.media,
       'add': True,
       'has_change_permission': True,
+      'step': step,
+      'files': files,
     }
     return TemplateResponse(request, 'ks/admin_multi_upload.html', c)
     

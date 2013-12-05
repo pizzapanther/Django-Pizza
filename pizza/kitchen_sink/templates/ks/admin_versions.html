@@ -3,7 +3,7 @@
   {% for v in page.version_iter %}
   <tr class="grp-row {% cycle 'grp-row-odd' 'grp-row-even' %}">
     <td>
-      {% if v.publish %}{{ v.publish|date:"M D, Y @ P" }}{% else %}Unpublished{% endif %}
+      {% if v.publish %}{{ v.publish|date:"D M d, Y @ P" }}{% else %}Unpublished{% endif %}
     </td>
     <td>
       {% if not v.publish %}<a href="./{{ page.id }}/?publish_now=1">Publish Now</a>&nbsp; &sdot;&nbsp; {% endif %}

@@ -22,7 +22,6 @@ def blogs (request, filters={}):
   
 @pagination('posts')
 def blog_index (request, slug=None, category=None, filters={}):
-  print slug, category
   blog = get_object_or_404(Blog, slug=slug, sites__id=request.pizza_site['id'], **filters)
   if category is not None:
     category = get_object_or_404(Category, slug=category)

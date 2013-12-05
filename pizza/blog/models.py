@@ -88,6 +88,8 @@ class Post (SlideshowMixin, models.Model):
   categories = models.ManyToManyField(Category, blank=True, null=True)
   
   body = models.TextField()
+  audio_embed = models.TextField('Audio Embed Code', blank=True, null=True)
+  video_embed = models.TextField('Video Embed Code', blank=True, null=True)
   
   image = models.ForeignKey('kitchen_sink.Image', blank=True, null=True)
   imageset = models.ForeignKey('kitchen_sink.ImageSet', blank=True, null=True)

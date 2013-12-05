@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.db import models
+from django import forms
 
 from pizza.kitchen_sink.widgets import RichText
 from pizza.kitchen_sink.admin import AdminMixin
@@ -24,6 +25,15 @@ class CategoryAdmin (AdminMixin, admin.ModelAdmin):
 class MediaFileInline (admin.TabularInline):
   model = MediaFile
   
+class PostForm (forms.ModelForm):
+  class Meta:
+    model = Post
+    fields = ('blog', 'title', 'slug', 'authors', 'categories', 'image', 'imageset', 'body',
+              'audio_embed', 'video_embed', 'publish')
+    widgets = {
+      'body': RichText
+    }
+    
 class PostAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('title', 'publish', 'slug', 'blog', 'Categories')
   search_fields = ('title', 'slug', 'blog')
@@ -37,10 +47,7 @@ class PostAdmin (AdminMixin, admin.ModelAdmin):
     'fk': ['blog', 'image', 'imageset'],
   }
   
-  formfield_overrides = {
-    models.TextField: {'widget': RichText},
-  }
-  
+  form = PostForm
   inlines = (MediaFileInline,)
   
   def save_formset (self, request, form, formset, change):

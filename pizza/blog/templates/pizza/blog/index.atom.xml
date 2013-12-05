@@ -8,17 +8,25 @@
   {% for n in paginator.current_list %}
   <entry>
     <title>{{ n.title|striptags }}</title>
-    <link href="http://{{ request.get_host }}{% url "blog_detail" n.slug n.id %}" rel="alternate"></link>
+    <link href="http://{{ request.get_host }}{% url "blog:detail" n.slug n.id %}" rel="alternate"></link>
     <updated>{{ n.publish|date:"c" }}</updated>
     <author>
       <name>{{ n.author.name }}</name>
     </author>
-    <id>https://{{ request.get_host }}{% url "blog_detail" n.slug n.id %}</id>
+    <id>http{% if request.is_secure %}s{% endif %}://{{ request.get_host }}{% url "blog:detail" n.slug n.id %}</id>
     <summary type="html">
       {% thumbnail n.first_image.file "500x300" upscale=False as im %}
       &lt;img src="{{ im.url }}" alt="" style="float: right; padding: 0 0 20px 20px;"&gt;
       {% endthumbnail %}
       {{ n.body }}
+      {% if n.video_embed %}
+      &lt;br&gt;&lt;br&gt;
+      {{ n.video_embed }}
+      {% endif %}
+      {% if n.audio_embed %}
+      &lt;br&gt;&lt;br&gt;
+      {{ n.audio_embed }}
+      {% endif %}
     </summary>
   </entry>
   {% endfor %}
