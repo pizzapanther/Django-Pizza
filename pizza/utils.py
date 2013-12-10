@@ -4,6 +4,9 @@ import hashlib
 from django.conf import settings
 from django.core.cache import cache
 from django.utils.timezone import utc
+from django.db import models
+from django.contrib.contenttypes.models import ContentType
+from django.contrib.contenttypes import generic
 
 PIZZA_CACHE_TIMEOUT = getattr(settings, 'PIZZA_CACHE_TIMEOUT', 600)
 
@@ -79,3 +82,42 @@ def cached_method (target):
     
   return wrapper
   
+def update_attrs (obj, clone, exclude=[]):
+  for f in obj._meta.fields:
+    if f.name not in exclude:
+      if not isinstance(f, models.AutoField) and not isinstance(f, models.OneToOneField) and not f in obj._meta.parents.values():
+        setattr(clone, f.name, getattr(obj, f.name))
+        
+  clone.save()
+  
+def copy_inlines (obj, newobj):
+  #TODO: Make this more generic so it works on generic relations and normal inlines
+  pass
+  
+def copy_model_instance (obj):
+  initial = {}
+  for f in obj._meta.fields:
+    if not isinstance(f, models.AutoField) and not isinstance(f, models.OneToOneField) and not f in obj._meta.parents.values():
+      initial[f.name] = getattr(obj, f.name)
+      
+  return obj.__class__(**initial)
+  
+def copy_many_to_many (obj, newobj):
+  for f in obj._meta.many_to_many:
+    org_m2m = getattr(obj, f.name)
+    new_m2m = getattr(newobj, f.name)
+    
+    if isinstance(f, models.ManyToManyField):
+      new_m2m.clear()
+      
+      for thingy in org_m2m.all():
+        new_m2m.add(thingy)
+        
+    elif isinstance(f, generic.GenericRelation):
+      new_m2m.clear()
+      
+      for thingy in org_m2m.all():
+        new_thingy = copy_model_instance(thingy)
+        new_thingy.content_object = newobj
+        new_thingy.save()
+        

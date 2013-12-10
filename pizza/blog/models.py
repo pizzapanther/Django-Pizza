@@ -8,7 +8,7 @@ from django.contrib.sites.models import Site
 from django.utils import timezone
 from django.conf import settings
 
-from pizza.kitchen_sink.models import SitesMixin, SlideshowMixin
+from pizza.kitchen_sink.models import SitesMixin, SlideshowMixin, CategoryAbstract
 from pizza.utils import now, cached_method
 
 PIZZA_MEDIA_DIR = getattr(settings, 'PIZZA_MEDIA_DIR', 'pizza/media/%Y-%m')
@@ -63,21 +63,9 @@ class Blog (SitesMixin, models.Model):
   class Meta:
     ordering = ('title',)
     
-class Category (models.Model):
-  title = models.CharField(max_length=100)
-  slug = models.SlugField(unique=True, max_length=200)
+class Category (CategoryAbstract):
+  pass
   
-  @staticmethod
-  def autocomplete_search_fields():
-    return ("id__iexact", "title__icontains")
-    
-  class Meta:
-    ordering = ('slug',)
-    verbose_name_plural = 'Categories'
-    
-  def __unicode__ (self):
-    return self.title
-    
 class Post (SlideshowMixin, models.Model):
   blog = models.ForeignKey(Blog)
   

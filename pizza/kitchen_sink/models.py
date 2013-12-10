@@ -568,3 +568,19 @@ class Inline (models.Model):
     verbose_name = " "
     verbose_name_plural = " "
     
+class CategoryAbstract (models.Model):
+  title = models.CharField(max_length=100)
+  slug = models.SlugField(unique=True, max_length=200)
+  
+  @staticmethod
+  def autocomplete_search_fields():
+    return ("id__iexact", "title__icontains")
+    
+  class Meta:
+    ordering = ('slug',)
+    verbose_name_plural = 'Categories'
+    abstract = True
+    
+  def __unicode__ (self):
+    return self.title
+    
