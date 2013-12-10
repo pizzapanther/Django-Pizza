@@ -84,7 +84,7 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
   
   raw_id_fields = ('image', 'imageset', 'series')
   autocomplete_lookup_fields = {
-    'fk': ['image', 'imageset'],
+    'fk': ['series', 'image', 'imageset'],
   }
   filter_horizontal = ('categories',)
   
