@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name = "Django-Pizza",
-    version = '13.12.1',
+    version = '13.12.2',
     description = "Yet another Django CMS.",
     url = "https://github.com/pizzapanther/Django-Pizza",
     author = "Paul Bailey",
@@ -18,6 +18,8 @@ setup(
       'pizza.blog',
       'pizza.blog.migrations',
       'pizza.blog.templatetags',
+      'pizza.calendar',
+      'pizza.calendar.migrations',
     ],
     include_package_data = True,
     classifiers = [
