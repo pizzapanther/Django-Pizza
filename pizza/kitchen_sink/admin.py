@@ -52,7 +52,7 @@ class ReAdmin (AdminMixin, admin.ModelAdmin):
   filter_horizontal = ('sites',)
   
 class PageAdmin (admin.ModelAdmin):
-  list_display = ('url', 'tpl', '_sites', 'Settings', 'View_Published', 'Versions')
+  list_display = ('Url', 'tpl', '_sites', 'Settings', 'View_Published', 'Versions')
   list_filter = ('sites', 'tpl')
   search_fields = ('url',)
   filter_horizontal = ('sites',)

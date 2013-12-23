@@ -80,3 +80,9 @@ class Event (SlideshowMixin, models.Model):
     
     return Event.objects.filter(categories__in=cats, start_dt__gt=now).exclude(id=self.id).distinct()[:num]
     
+  def dates_qs (self):
+    return Event.objects.filter(series=self.series, start_dt__gte=self.start_dt)
+    
+  def dates (self, num=3):
+    return self.dates_qs()[:num]
+    

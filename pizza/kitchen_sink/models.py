@@ -307,7 +307,13 @@ class Page (SitesMixin, models.Model):
   class Meta:
     ordering = ('url',)
     
+  def Url (self):
+    return self.__unicode__()
+    
   def __unicode__ (self):
+    if self.url == '/':
+      return '{ homepage }'
+      
     return self.url
     
   @staticmethod
