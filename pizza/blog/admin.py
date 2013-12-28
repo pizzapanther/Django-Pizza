@@ -18,10 +18,28 @@ class BlogAdmin (AdminMixin, admin.ModelAdmin):
   autocomplete_lookup_fields = {
     'fk': ['image',],
   }
-class CategoryAdmin (AdminMixin, admin.ModelAdmin):
-  list_display = ('title', 'slug')
-  search_fields = ('title', 'slug')
   
+def merge_cats (modeladmin, request, queryset):
+  if queryset.count() > 1:
+    cat = queryset[0]
+    for c in queryset[1:]:
+      for post in c.post_set.all():
+        post.categories.remove(c)
+        post.categories.add(cat)
+        
+    for c in queryset[1:]:
+      c.delete()
+      
+merge_cats.short_description = "Merge Categories"
+
+class CategoryAdmin (AdminMixin, admin.ModelAdmin):
+  list_display = ('title', 'slug', 'posts')
+  search_fields = ('title', 'slug')
+  actions = (merge_cats,)
+  
+  def posts (self, obj):
+    return obj.post_set.all().count()
+    
 class MediaFileInline (admin.TabularInline):
   model = MediaFile
   
