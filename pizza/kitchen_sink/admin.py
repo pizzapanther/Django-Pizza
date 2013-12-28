@@ -32,11 +32,32 @@ class AdminMixin (object):
   class Media:
     js = ADMIN_QUERY_JS
     
+def merge_peeps (modeladmin, request, queryset):
+  if queryset.count() > 1:
+    auth = queryset[0]
+    if hasattr(auth, 'blog_set'):
+      for a in queryset[1:]:
+        for blog in a.blog_set.all():
+          blog.authors.remove(a)
+          blog.authors.add(auth)
+          
+    if hasattr(auth, 'post_set'):
+      for a in queryset[1:]:
+        for post in a.post_set.all():
+          post.authors.remove(a)
+          post.authors.add(auth)
+          
+    for a in queryset[1:]:
+      a.delete()
+      
+merge_peeps.short_description = "Merge Authors"
+
 class AuthorAdmin (AdminMixin, admin.ModelAdmin):
-  list_display = ('name', 'slug', 'Thumbnail', '_sites')
+  list_display = ('name', 'slug', 'Thumbnail', '_sites', 'blogs', 'posts')
   search_fields = ('name', 'slug', 'description')
   raw_id_fields = ('image',)
   filter_horizontal = ('sites',)
+  actions = (merge_peeps,)
   autocomplete_lookup_fields = {
     'fk': ['image'],
   }
@@ -45,6 +66,18 @@ class AuthorAdmin (AdminMixin, admin.ModelAdmin):
     models.TextField: {'widget': RichText},
   }
   
+  def blogs (self, obj):
+    if hasattr(obj, 'blog_set'):
+      return obj.blog_set.all().count()
+      
+    return 'N/A'
+    
+  def posts (self, obj):
+    if hasattr(obj, 'post_set'):
+      return obj.post_set.all().count()
+      
+    return 'N/A'
+    
 class ReAdmin (AdminMixin, admin.ModelAdmin):
   list_display = ('url', 'goto', '_sites')
   list_filter = ('sites',)
