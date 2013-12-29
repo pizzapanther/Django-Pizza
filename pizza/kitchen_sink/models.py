@@ -18,9 +18,9 @@ from django.core.urlresolvers import reverse
 from django.core.files.storage import get_storage_class
 from django.utils import timezone
 
-from .widgets import RichText
+from .widgets import RichText, HiddenViewInput
 from pizza.middleware import PIZZA_SITES_KEY, PIZZA_DEFAULT_SITE_KEY
-from pizza.utils import cached_method
+from pizza.utils import cached_method, USING_GRAPPELLI
 
 from sorl.thumbnail import get_thumbnail
 
@@ -377,13 +377,16 @@ class Page (SitesMixin, models.Model):
     if regions and inline:
       class Meta:
         model = Version
-        exclude = ('page', 'content', 'title', 'keywords', 'desc', 'publish', 'version', 'icnt')
+        exclude = ('page', 'content', 'title', 'keywords', 'desc', 'publish', 'version')
         
       fields = {
         'inline': inline,
-        'Meta': Meta
+        'Meta': Meta,
       }
       
+      if USING_GRAPPELLI:
+        fields['icnt'] = forms.IntegerField(widget=HiddenViewInput(), label="Order")
+        
     else:
       class Meta:
         model = Version
@@ -449,8 +452,8 @@ class Page (SitesMixin, models.Model):
         content = version.get_content()
         if key in content:
           init_list = content[key]
-          for init_dict in init_list:
-            idict = {}
+          for icnt, init_dict in enumerate(init_list):
+            idict = {'icnt': icnt + 1}
             for ikey, value in init_dict.items():
               idict['generatedfield_' + ikey] = value
               
@@ -464,6 +467,7 @@ class Page (SitesMixin, models.Model):
           verbose_name_plural = iplural
           form = self.admin_form(version, regions=inline['regions'], inline=key)
           initial = init
+          sortable_field_name = "icnt"
           
         classes.append(AdminInline)
         index += 1
@@ -565,7 +569,7 @@ class Version (models.Model):
     
 class Inline (models.Model):
   page = models.ForeignKey(Page)
-  icnt = models.IntegerField()
+  icnt = models.IntegerField("Order")
   
   def __unicode__ (self):
     return ""
@@ -573,6 +577,7 @@ class Inline (models.Model):
   class Meta:
     verbose_name = " "
     verbose_name_plural = " "
+    ordering = ('icnt',)
     
 class CategoryAbstract (models.Model):
   title = models.CharField(max_length=100)

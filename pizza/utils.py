@@ -10,6 +10,8 @@ from django.contrib.contenttypes import generic
 
 PIZZA_CACHE_TIMEOUT = getattr(settings, 'PIZZA_CACHE_TIMEOUT', 600)
 
+USING_GRAPPELLI = 'grappelli' in settings.INSTALLED_APPS
+
 def now ():
   return datetime.datetime.utcnow().replace(tzinfo=utc)
   

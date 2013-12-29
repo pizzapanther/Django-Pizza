@@ -196,6 +196,7 @@ class PageAdmin (admin.ModelAdmin):
     instances = formset.save(commit=False)
     
     count = 0
+    instances = sorted(instances, key=lambda x: x.cleaned_data['icnt'])
     for inline in instances:
       d = {}
       for ikey, value in inline.cleaned_data.items():
