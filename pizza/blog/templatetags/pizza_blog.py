@@ -1,4 +1,5 @@
 import os
+import re
 
 from django import template
 
@@ -16,3 +17,15 @@ def http_url (url):
 def filename (path):
   return os.path.basename(path)
   
+@register.filter
+def format_video_size (embed, size):
+    size = size.split('x')
+    
+    embed = re.sub('width="\d+"', 'width="%s"' % size[0], embed, flags=re.I)
+    embed = re.sub("width='\d+'", "width='%s'" % size[0], embed, flags=re.I)
+    
+    embed = re.sub('height="\d+"', 'height="%s"' % size[1], embed, flags=re.I)
+    embed = re.sub("height='\d+'", "height='%s'" % size[1], embed, flags=re.I)
+    
+    return embed
+    
