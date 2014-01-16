@@ -23,10 +23,16 @@ def merge_cats (modeladmin, request, queryset):
   if queryset.count() > 1:
     cat = queryset[0]
     for c in queryset[1:]:
-      for post in c.post_set.all():
-        post.categories.remove(c)
-        post.categories.add(cat)
-        
+      if hasattr(c, 'post_set'):
+        for post in c.post_set.all():
+          post.categories.remove(c)
+          post.categories.add(cat)
+          
+      if hasattr(c, 'event_set'):
+        for post in c.event_set.all():
+          post.categories.remove(c)
+          post.categories.add(cat)
+          
     for c in queryset[1:]:
       c.delete()
       
