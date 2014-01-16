@@ -223,6 +223,12 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
       
     return ret
     
-admin.site.register(Category, CategoryAdmin)
+class EventCategoryAdmin (CategoryAdmin):
+  list_display = ('title', 'slug', 'events')
+  
+  def events (self, obj):
+    return obj.event_set.all().count()
+    
+admin.site.register(Category, EventCategoryAdmin)
 admin.site.register(Event, EventAdmin)
 admin.site.register(Series, SeriesAdmin)
