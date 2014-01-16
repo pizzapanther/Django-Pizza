@@ -37,6 +37,8 @@ class Event (SlideshowMixin, models.Model):
   end_dt = models.DateTimeField('End', blank=True, null=True)
   all_day = models.BooleanField('All day event', default=False)
   
+  url = models.URLField(blank=True, null=True)
+  
   body = models.TextField()
   
   image = models.ForeignKey('kitchen_sink.Image', blank=True, null=True)

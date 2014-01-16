@@ -100,7 +100,7 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
     }),
     
     (None, {
-      'fields': ('title', 'body', 'image', 'imageset', 'categories'),
+      'fields': ('title', 'url', 'body', 'image', 'imageset', 'categories'),
     }),
   )
   
@@ -114,7 +114,7 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
     }),
     
     (None, {
-      'fields': ('title', 'body', 'image', 'imageset', 'categories'),
+      'fields': ('title', 'url', 'body', 'image', 'imageset', 'categories'),
     }),
   )
   

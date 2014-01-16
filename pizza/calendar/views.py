@@ -2,6 +2,7 @@ import re
 import datetime
 
 import pytz
+from dateutil.relativedelta import relativedelta
 
 from django.template.response import TemplateResponse
 from django.shortcuts import get_object_or_404
@@ -39,7 +40,9 @@ def events (request):
   today = datetime.datetime(now.year, now.month, now.day, tzinfo=TZ)
   
   kwargs['start_dt__gte'] = today
-  delta = datetime.timedelta(days=7)
+  
+  #delta = datetime.timedelta(days=7)
+  delta = relativedelta(months=1)
   
   if start:
     try:
@@ -76,6 +79,10 @@ def events (request):
     current_year += 1
     years.append(current_year)
     
+  future_months = [now]
+  for i in range(1, 12):
+    future_months.append(now + relativedelta(months=i))
+    
   c = {
     'events': events,
     'start': kwargs['start_dt__gte'],
@@ -86,6 +93,7 @@ def events (request):
     'cats': Category.objects.all(),
     'category': category,
     'today': today,
+    'future_months': future_months,
   }
   return TemplateResponse(request, templates, c)
   
