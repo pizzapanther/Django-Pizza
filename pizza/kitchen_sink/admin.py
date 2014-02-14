@@ -193,6 +193,14 @@ class PageAdmin (admin.ModelAdmin):
       
     cdict = request.version.get_content()
     cdict[key] = []
+    for fm in formset:
+        pk = fm['id'].value()
+        if pk:
+            iobj = Inline.objects.filter(id=pk).first()
+            if not iobj:
+                iobj = Inline(id=pk, page=request.version.page, icnt=fm['icnt'].value())
+                iobj.save()
+                
     instances = formset.save(commit=False)
     
     count = 0
