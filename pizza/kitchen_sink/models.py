@@ -555,7 +555,7 @@ class Version (models.Model):
     return {}
     
   def set_content (self, d):
-    self.content = pickle.dumps(d)
+    self.content = pickle.dumps(d).decode('ascii', 'ignore')
     
   class Meta:
     ordering = ('-publish', 'id')
