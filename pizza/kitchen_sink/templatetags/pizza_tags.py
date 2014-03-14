@@ -7,15 +7,20 @@ from ..models import Blurb
 
 @register.filter
 def get_blurb (bkey):
+  ret = None
+  
   try:
     b = Blurb.objects.get(slug=bkey)
     
   except models.ObjectDoesNotExist:
-    return None
+    ret = None
     
   else:
     if b.content:
-      return b.content
+      ret = b.content
       
-    return None
+  if ret is None:
+    ret = 'No content found for {}'.format(bkey)
     
+  return ret
+  
