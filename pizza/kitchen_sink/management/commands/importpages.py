@@ -54,10 +54,8 @@ def new_version (page, **kwargs):
     if type(value) in [types.ListType, types.TupleType]:
       cnt = 0
       for item in value:
-        inline, created = Inline.objects.get_or_create(page=page, icnt=cnt)
-        if created:
-          inline.save()
-          
+        inline = Inline.objects.get_or_create(page=page, icnt=cnt)
+        inline.save()
         cnt += 1
         
   version.set_content(v)
