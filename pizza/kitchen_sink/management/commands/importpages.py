@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from pizza.kitchen_sink.models import Page, Version, Image
+from pizza.kitchen_sink.models import Page, Version, Image, Inline
 
 def yes_no (message):
   while 1:
@@ -50,6 +50,16 @@ def new_version (page, **kwargs):
   del v['keywords']
   del v['description']
   
+  for key, value in v.items():
+    if type(value) in [types.ListType, types.TupleType]:
+      cnt = 0
+      for item in value:
+        inline, created = Inline.objects.get_or_create(page=page, icnt=cnt)
+        if created:
+          inline.save()
+          
+        cnt += 1
+        
   version.set_content(v)
   
   return version
