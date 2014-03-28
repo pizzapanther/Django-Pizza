@@ -54,7 +54,7 @@ def new_version (page, **kwargs):
     if type(value) in [types.ListType, types.TupleType]:
       cnt = 0
       for item in value:
-        inline = Inline.objects.get_or_create(page=page, icnt=cnt)
+        inline = Inline(page=page, icnt=cnt)
         inline.save()
         cnt += 1
         
