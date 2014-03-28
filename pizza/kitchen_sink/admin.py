@@ -1,4 +1,5 @@
 import json
+import types
 
 from django.contrib import admin
 from django.db import models
@@ -89,6 +90,7 @@ class PageAdmin (admin.ModelAdmin):
   list_filter = ('sites', 'tpl')
   search_fields = ('url',)
   filter_horizontal = ('sites',)
+  actions = ['delete_selected', 'export']
   
   class Media:
     css = {'all': ('ks/css/admin.css', )}
@@ -97,6 +99,67 @@ class PageAdmin (admin.ModelAdmin):
       'ks/js/ks.js',
       'ks/js/clear_filters.js',
     )
+    
+  def export (self, request, queryset):
+    data = {'exports': [], 'sites': []}
+    export_sites = []
+    for page in queryset:
+      sites = [s.id for s in page.sites.all()]
+      for s in sites:
+        if s not in export_sites:
+          export_sites.append(s)
+          
+      export = {'url': page.url, 'tpl': page.tpl, 'sites': sites}
+      version = page.published_version()
+      if version:
+        export['published'] = True
+        
+      else:
+        export['published'] = False
+        versions = page.unpublished_versions()
+        if versions:
+          version = versions[0]
+          
+        else:
+          version = None
+          
+      export['version'] = {}
+      if version:
+        context = version.get_context()
+        c = {
+          'title': version.title,
+          'keywords': version.keywords,
+          'description': version.desc
+        }
+        
+        c.update(context)
+        export['version'] = self.convert_image_objects(c)
+        
+      data['exports'].append(export)
+      
+    for site in Site.objects.filter(id__in=export_sites):
+      data['sites'].append({'id': site.id, 'name': site.name, 'domain': site.domain})
+      
+    filename = timezone.now().strftime('%Y-%m-%d_%H%M.json')
+    response = http.HttpResponse(json.dumps(data, indent=2), content_type="application/json")
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+    
+    return response
+    
+  def convert_image_objects (self, context):
+    for key, value in context.items():
+      if hasattr(value, 'jdict'):
+        context[key] = value.jdict()
+        
+      elif type(value) in [types.ListType, types.TupleType]:
+        temp = []
+        for item in value:
+          item = self.convert_image_objects(item)
+          temp.append(item)
+          
+        context[key] = temp
+        
+    return context
     
   def get_form (self, request, obj=None, **kwargs):
     if hasattr(request, 'version') and request.version:

@@ -1,3 +1,4 @@
+import pytz
 import types
 import datetime
 
@@ -182,7 +183,7 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
         end_delta = obj.end_dt - obj.start_dt
         
       if delta:
-        start = obj.start_dt
+        start = pytz.utc.normalize(obj.start_dt.astimezone(pytz.utc))
         while 1:
           if delta == 'year':
             start = start.replace(year=start.year + 1)
@@ -200,6 +201,8 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
           if start <= form.cleaned_data['repeat_until']:
             newobj = copy_model_instance(obj)
             newobj.start_dt = start
+            print start, start.tzinfo, start.dst()
+            
             if obj.end_dt:
               newobj.end_dt = newobj.start_dt + end_delta
               

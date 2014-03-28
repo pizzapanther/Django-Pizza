@@ -175,6 +175,18 @@ class Image (ViewFileMixin, models.Model):
   def cred_url (self):
     return self.credit_url
     
+  def jdict (self):
+    return {
+      'name': self.file.name,
+      'url': self.file.url,
+      'title': self.title,
+      
+      'caption': self.caption,
+      'caption_url': self.caption_url,
+      'credit': self.credit,
+      'credit_url': self.credit_url,
+    }
+    
 CAPTYPES = (
   ('override', 'Use image captions and credits, and override if filled in below.'),
   ('mine', 'Use captions and credits from below only'),
