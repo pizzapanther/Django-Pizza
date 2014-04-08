@@ -37,30 +37,34 @@ def choose_page (page, pages):
       
 def new_version (page, **kwargs):
   v = kwargs['version']
-  version = Version(page=page,
-    title=v['title'],
-    keywords=v['keywords'],
-    desc=v['description'],
-  )
-  
-  if kwargs['published']:
-    version.publish = timezone.now()
+  if v:
+    version = Version(page=page,
+      title=v['title'],
+      keywords=v['keywords'],
+      desc=v['description'],
+    )
     
-  del v['title']
-  del v['keywords']
-  del v['description']
-  
-  for key, value in v.items():
-    if type(value) in [types.ListType, types.TupleType]:
-      cnt = 0
-      for item in value:
-        inline = Inline(page=page, icnt=cnt)
-        inline.save()
-        cnt += 1
-        
-  version.set_content(v)
-  
-  return version
+    if kwargs['published']:
+      version.publish = timezone.now()
+      
+    del v['title']
+    del v['keywords']
+    del v['description']
+    
+    for key, value in v.items():
+      if type(value) in [types.ListType, types.TupleType]:
+        cnt = 0
+        for item in value:
+          inline = Inline(page=page, icnt=cnt)
+          inline.save()
+          item['iid'] = inline.id
+          cnt += 1
+          
+    version.set_content(v)
+    
+    return version
+    
+  return None
   
 def convert_images (vdict, create_images):
   for key, value in vdict.items():
@@ -147,7 +151,8 @@ class Command (BaseCommand):
           
         export['version'] = convert_images(export['version'], create_images)
         version = new_version(page, **export)
-        version.save()
-        
+        if version:
+          version.save()
+          
       print 'Import Complete\n'
       
