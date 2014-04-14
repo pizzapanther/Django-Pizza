@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.contrib.admin import widgets
 from django.utils.safestring import SafeText, mark_safe
 from django.db.models import Count
+from django.utils import timezone
 
 from .models import Category, Event, Series
 from pizza.utils import update_attrs, copy_inlines, copy_many_to_many, copy_model_instance
@@ -183,7 +184,10 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
         end_delta = obj.end_dt - obj.start_dt
         
       if delta:
-        start = pytz.utc.normalize(obj.start_dt.astimezone(pytz.utc))
+        start = obj.start_dt
+        tz = timezone.get_current_timezone()
+        old_dst = start.dst()
+        
         while 1:
           if delta == 'year':
             start = start.replace(year=start.year + 1)
@@ -199,9 +203,13 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
             start += delta
             
           if start <= form.cleaned_data['repeat_until']:
+            if tz.zone != 'UTC':
+              start = tz.normalize(start)
+              if old_dst != start.dst():
+                start = start + (old_dst - start.dst())
+                
             newobj = copy_model_instance(obj)
             newobj.start_dt = start
-            print start, start.tzinfo, start.dst()
             
             if obj.end_dt:
               newobj.end_dt = newobj.start_dt + end_delta
@@ -209,6 +217,7 @@ class EventAdmin (AdminMixin, admin.ModelAdmin):
             newobj.save()
             copy_many_to_many(obj, newobj)
             copy_inlines(obj, newobj)
+            old_dst = start.dst()
             
           else:
             break
