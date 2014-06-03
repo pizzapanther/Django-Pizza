@@ -3,6 +3,8 @@ from django.conf import settings
 from django.utils.safestring import mark_safe
 from django.core.urlresolvers import reverse
 
+from django_markdown.widgets import MarkdownWidget as RichText
+
 class HiddenViewInput (forms.HiddenInput):
   def render (self, name, value, attrs=None):
     ret = super(HiddenViewInput, self).render(name, value, attrs=attrs)
@@ -11,7 +13,7 @@ class HiddenViewInput (forms.HiddenInput):
       
     return mark_safe(ret)
     
-class RichText (forms.Textarea):
+class RichTextOld (forms.Textarea):
   def render (self, name, value, attrs=None):
     ret = super(RichText, self).render(name, value, attrs=attrs)
     ret = ret.replace('<textarea ', '<textarea class="pizza_editor" ')
