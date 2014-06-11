@@ -41,6 +41,11 @@ def page (request):
       c.update(context)
       return TemplateResponse(request, qs[0].tpl, c)
       
+  qs = Page.objects.filter(url__iexact=request.path, sites__id=request.pizza_site['id'])
+  if qs.count() > 0:
+    if qs[0].published_version():
+      return http.HttpResponseRedirect(qs[0].url)
+      
   if not request.path.endswith('/'):
     match = resolve(request.path + '/')
     if match.url_name != 'pizza.utils.wrapper':
