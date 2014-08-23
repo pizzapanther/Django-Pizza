@@ -39,6 +39,9 @@ class Siteware (object):
 class RememberAdminQuery:
   def process_request (self, request):
     if request.method == 'GET' and request.path.startswith('/admin'):
+      if request.REQUEST.get('nocache', '') == '1':
+        return None
+        
       other = re.search("^/admin/(\S+?)/(\S+?)/\S+$", request.path)
       found = re.search("^/admin/(\S+?)/(\S+?)/$", request.path)
       clear = request.REQUEST.get('__clearqs', '')
