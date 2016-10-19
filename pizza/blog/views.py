@@ -45,7 +45,7 @@ def blog_index (request, slug=None, category=None, filters={}):
     
   c = {
     'blog': blog,
-    'posts': blog.published(category),
+    'posts': blog.published(category, ftype),
     'category': category,
     'ftype': ftype,
     'ITUNES_OWNER': PIZZA_PODCAST_OWNER,

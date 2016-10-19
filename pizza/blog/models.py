@@ -47,11 +47,15 @@ class Blog (SitesMixin, models.Model):
   def categories (self):
     return Category.objects.filter(post__blog=self).distinct()
     
-  def published (self, category=None):
+  def published (self, category=None, ftype=None):
+    qs = self.post_set.filter(publish__lte=now())
     if category:
-      return self.post_set.filter(publish__lte=now(), categories=category)
+      qs = self.post_set.filter(publish__lte=now(), categories=category)
       
-    return self.post_set.filter(publish__lte=now())
+    if ftype:
+      qs = qs.filter(mediafile__ext__ext=ftype)
+      
+    return qs
     
   @staticmethod
   def autocomplete_search_fields():
